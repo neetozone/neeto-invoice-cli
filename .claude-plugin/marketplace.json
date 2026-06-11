@@ -1,0 +1,14 @@
+{
+  "name": "neetoinvoice",
+  "owner": {
+    "name": "BigBinary",
+    "email": "support@bigbinary.com"
+  },
+  "plugins": [
+    {
+      "name": "neetoinvoice",
+      "source": "./",
+      "description": "NeetoInvoice CLI"
+    }
+  ]
+}
