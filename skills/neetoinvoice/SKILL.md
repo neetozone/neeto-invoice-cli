@@ -128,6 +128,19 @@ stderr. Common errors the agent should expect:
 
 ## Product-specific commands
 
-This skeleton CLI does not yet ship product-specific resource commands.
-Run `neetoinvoice commands` to see what is currently available, and
-refer to the CLI's own docs for the full command reference once it grows.
+Run `neetoinvoice commands` for the full machine-readable catalog with every
+flag. The resource commands are:
+
+| Command | Description |
+| --- | --- |
+| `clients create/show/update` | Manage clients. `show`/`update` take the client identifier; `create` requires `--name`. |
+| `recipients create/update/delete` | Manage a client's invoice recipients. All take `--client <client-identifier>`; `create` also needs `--name`, `--email`, and `--user-email` (the acting organization user). |
+| `invoices create` | Generate an invoice for a client. Requires `--client` and `--user-email`; needs an invoice `--number` plus line items (`invoice_time_entries`/`invoice_services`) passed via `--data <file.json>`. Dates are MM/DD/YYYY. |
+| `projects create/show/update` | Manage projects. `create` requires `--name`, `--client-id` (the client record ID), at least one `--task`, and `--user-email`. Billing methods: `hourly_project_rate`, `hourly_person_rate`, `hourly_task_rate`, `fixed_price_project`. |
+| `project-users list/create/update/delete` | Manage users on a project. All take `--project <project-identifier>`; roles are `regular_user`/`project_manager`. |
+| `time-entries list/create` | List unbilled time entries for a project, or log time. Both take `--client` and `--project`; `create` also needs `--task-id`, `--user-email`, `--recorded-on` (YYYY-MM-DD), and `--hours`. |
+
+ID conventions: `clients`/`projects` are addressed by their `identifier`
+(short hex string returned in `show` responses); `clients create` and
+project `--client-id` use the record `id` (UUID). Recipient, project-user,
+task, and time-entry IDs are UUIDs.

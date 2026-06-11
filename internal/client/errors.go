@@ -27,9 +27,13 @@ func parseAPIError(statusCode int, body []byte) *APIError {
 	apiErr := &APIError{StatusCode: statusCode}
 
 	var parsed struct {
-		Error  string   `json:"error"`
-		Errors []string `json:"errors"`
-		Notice string   `json:"notice"`
+		Error       string   `json:"error"`
+		Errors      []string `json:"errors"`
+		Notice      string   `json:"notice"`
+		FieldErrors []struct {
+			Field   string `json:"field"`
+			Message string `json:"message"`
+		} `json:"field_errors"`
 	}
 	if err := json.Unmarshal(body, &parsed); err == nil {
 		if parsed.Error != "" {
@@ -39,6 +43,13 @@ func parseAPIError(statusCode int, body []byte) *APIError {
 		} else if len(parsed.Errors) > 0 {
 			apiErr.Message = parsed.Errors[0]
 			apiErr.Errors = parsed.Errors[1:]
+		}
+		for _, fieldErr := range parsed.FieldErrors {
+			detail := fieldErr.Message
+			if fieldErr.Field != "" {
+				detail = fieldErr.Field + ": " + fieldErr.Message
+			}
+			apiErr.Errors = append(apiErr.Errors, detail)
 		}
 	}
 
