@@ -9,6 +9,7 @@ A command-line interface for NeetoInvoice.
 **Homebrew (recommended on macOS):**
 
 ```bash
+brew trust neetozone/tap
 brew install neetozone/homebrew-tap/neetoinvoice
 ```
 
