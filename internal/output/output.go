@@ -180,10 +180,10 @@ func printPretty(data json.RawMessage) {
 	var obj map[string]interface{}
 	if err := json.Unmarshal(data, &obj); err == nil {
 		if inner, ok := singleNestedObject(data); ok {
-			printObject(inner, 0)
+			printObject(inner, 1)
 			return
 		}
-		printObject(data, 0)
+		printObject(data, 1)
 		return
 	}
 
@@ -192,7 +192,7 @@ func printPretty(data json.RawMessage) {
 }
 
 func printTable(rows []map[string]interface{}, indent int) {
-	prefix := strings.Repeat("  ", indent)
+	prefix := indentPrefix(indent)
 
 	cols := pickColumns(rows[0])
 	if len(cols) == 0 {
@@ -358,32 +358,35 @@ func singleNestedObject(data json.RawMessage) (json.RawMessage, bool) {
 func printObject(data json.RawMessage, indent int) {
 	fields, ok := orderedFields(data)
 	if !ok {
-		printIndentedJSON(data, indent+1)
+		printIndentedJSON(data, indent)
 		return
 	}
 
-	linePrefix := strings.Repeat("  ", indent+1)
+	linePrefix := indentPrefix(indent)
 
+	values := make([]string, len(fields))
+	inline := make([]bool, len(fields))
 	maxLabelLen := 0
-	for _, f := range fields {
-		if rendersInline(f.value) {
+	for i, f := range fields {
+		values[i], inline[i] = inlineField(f.value)
+		if inline[i] {
 			if l := len(formatHeader(f.key)); l > maxLabelLen {
 				maxLabelLen = l
 			}
 		}
 	}
 
-	for _, f := range fields {
+	for i, f := range fields {
 		label := formatHeader(f.key)
 		switch {
-		case rendersInline(f.value):
-			fmt.Printf("%s%-*s  %s\n", linePrefix, maxLabelLen, label, inlineValue(f.value))
+		case inline[i]:
+			fmt.Printf("%s%-*s  %s\n", linePrefix, maxLabelLen, label, values[i])
 		case isJSONObject(f.value):
 			fmt.Printf("%s%s\n", linePrefix, label)
 			printObject(f.value, indent+1)
 		default:
 			fmt.Printf("%s%s\n", linePrefix, label)
-			printArray(f.value, indent+2)
+			printArray(f.value, indent+1)
 		}
 	}
 }
@@ -398,12 +401,18 @@ func printArray(data json.RawMessage, indent int) {
 }
 
 func printIndentedJSON(v interface{}, indent int) {
-	prefix := strings.Repeat("  ", indent)
-	out, err := json.MarshalIndent(v, prefix, "  ")
+	out, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
 		return
 	}
-	fmt.Printf("%s%s\n", prefix, string(out))
+	prefix := indentPrefix(indent)
+	for _, line := range strings.Split(string(out), "\n") {
+		fmt.Printf("%s%s\n", prefix, line)
+	}
+}
+
+func indentPrefix(indent int) string {
+	return strings.Repeat("  ", indent)
 }
 
 func isJSONObject(data json.RawMessage) bool {
@@ -411,39 +420,31 @@ func isJSONObject(data json.RawMessage) bool {
 	return len(trimmed) > 0 && trimmed[0] == '{'
 }
 
-func rendersInline(data json.RawMessage) bool {
+func inlineField(data json.RawMessage) (string, bool) {
 	var v interface{}
 	if err := json.Unmarshal(data, &v); err != nil {
-		return true
+		return strings.TrimSpace(string(data)), true
 	}
 	switch val := v.(type) {
 	case map[string]interface{}:
-		return len(val) == 0
+		if len(val) > 0 {
+			return "", false
+		}
 	case []interface{}:
 		for _, item := range val {
 			if !isScalar(item) {
-				return false
+				return "", false
 			}
 		}
-		return true
-	default:
-		return true
-	}
-}
-
-func inlineValue(data json.RawMessage) string {
-	var v interface{}
-	if err := json.Unmarshal(data, &v); err != nil {
-		return strings.TrimSpace(string(data))
 	}
 	if isScalar(v) {
-		return formatValue(v)
+		return formatValue(v), true
 	}
 	compact, err := json.Marshal(v)
 	if err != nil {
-		return strings.TrimSpace(string(data))
+		return strings.TrimSpace(string(data)), true
 	}
-	return string(compact)
+	return string(compact), true
 }
 
 func printToon(data json.RawMessage) {
