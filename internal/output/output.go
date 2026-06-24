@@ -173,21 +173,17 @@ func printPretty(data json.RawMessage) {
 			fmt.Println("No records found.")
 			return
 		}
-		printTable(arr)
+		printTable(arr, 0)
 		return
 	}
 
 	var obj map[string]interface{}
 	if err := json.Unmarshal(data, &obj); err == nil {
-		if len(obj) == 1 {
-			for _, v := range obj {
-				if inner, ok := v.(map[string]interface{}); ok {
-					printKeyValue(inner, data)
-					return
-				}
-			}
+		if inner, ok := singleNestedObject(data); ok {
+			printObject(inner, 0)
+			return
 		}
-		printKeyValue(obj, data)
+		printObject(data, 0)
 		return
 	}
 
@@ -195,11 +191,12 @@ func printPretty(data json.RawMessage) {
 	fmt.Println(string(out))
 }
 
-func printTable(rows []map[string]interface{}) {
+func printTable(rows []map[string]interface{}, indent int) {
+	prefix := strings.Repeat("  ", indent)
+
 	cols := pickColumns(rows[0])
 	if len(cols) == 0 {
-		out, _ := json.MarshalIndent(rows, "", "  ")
-		fmt.Println(string(out))
+		printIndentedJSON(rows, indent)
 		return
 	}
 
@@ -216,9 +213,10 @@ func printTable(rows []map[string]interface{}) {
 		}
 	}
 
-	widths := calculateWidths(headers, grid)
+	widths := calculateWidths(headers, grid, indent)
 	pad := strings.Repeat(" ", colPadding)
 
+	fmt.Print(prefix)
 	for i, h := range headers {
 		if i > 0 {
 			fmt.Print(pad)
@@ -227,6 +225,7 @@ func printTable(rows []map[string]interface{}) {
 	}
 	fmt.Println()
 
+	fmt.Print(prefix)
 	for i, w := range widths {
 		if i > 0 {
 			fmt.Print(pad)
@@ -236,6 +235,7 @@ func printTable(rows []map[string]interface{}) {
 	fmt.Println()
 
 	for _, row := range grid {
+		fmt.Print(prefix)
 		for i, val := range row {
 			if i > 0 {
 				fmt.Print(pad)
@@ -281,7 +281,7 @@ func pickColumns(sample map[string]interface{}) []string {
 	return cols
 }
 
-func calculateWidths(headers []string, grid [][]string) []int {
+func calculateWidths(headers []string, grid [][]string, indent int) []int {
 	widths := make([]int, len(headers))
 	for i, h := range headers {
 		widths[i] = len(h)
@@ -295,7 +295,7 @@ func calculateWidths(headers []string, grid [][]string) []int {
 	}
 
 	termWidth := getTerminalWidth()
-	totalPad := (len(headers) - 1) * colPadding
+	totalPad := (len(headers)-1)*colPadding + indent*2
 	available := termWidth - totalPad
 
 	total := 0
@@ -312,110 +312,138 @@ func calculateWidths(headers []string, grid [][]string) []int {
 	return widths
 }
 
-func printKeyValue(obj map[string]interface{}, rawData json.RawMessage) {
-	fields := fieldOrder(rawData)
-	if len(fields) == 0 {
-		for k := range obj {
-			fields = append(fields, k)
-		}
-		sort.Strings(fields)
+type rawField struct {
+	key   string
+	value json.RawMessage
+}
+
+func orderedFields(data json.RawMessage) ([]rawField, bool) {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	t, err := dec.Token()
+	if err != nil || t != json.Delim('{') {
+		return nil, false
 	}
+
+	var fields []rawField
+	for dec.More() {
+		t, err := dec.Token()
+		if err != nil {
+			return nil, false
+		}
+		key, ok := t.(string)
+		if !ok {
+			return nil, false
+		}
+
+		var value json.RawMessage
+		if err := dec.Decode(&value); err != nil {
+			return nil, false
+		}
+		fields = append(fields, rawField{key, value})
+	}
+	return fields, true
+}
+
+func singleNestedObject(data json.RawMessage) (json.RawMessage, bool) {
+	fields, ok := orderedFields(data)
+	if !ok || len(fields) != 1 {
+		return nil, false
+	}
+	if isJSONObject(fields[0].value) {
+		return fields[0].value, true
+	}
+	return nil, false
+}
+
+func printObject(data json.RawMessage, indent int) {
+	fields, ok := orderedFields(data)
+	if !ok {
+		printIndentedJSON(data, indent+1)
+		return
+	}
+
+	linePrefix := strings.Repeat("  ", indent+1)
 
 	maxLabelLen := 0
-	for _, k := range fields {
-		if _, ok := obj[k]; !ok {
-			continue
-		}
-		label := formatHeader(k)
-		if len(label) > maxLabelLen {
-			maxLabelLen = len(label)
-		}
-	}
-
-	for _, k := range fields {
-		v, ok := obj[k]
-		if !ok {
-			continue
-		}
-		label := formatHeader(k)
-
-		if isScalar(v) {
-			fmt.Printf("  %-*s  %s\n", maxLabelLen, label, formatValue(v))
-		} else {
-			compact, _ := json.Marshal(v)
-			if len(compact) <= 80 {
-				fmt.Printf("  %-*s  %s\n", maxLabelLen, label, string(compact))
-			} else {
-				fmt.Printf("  %-*s  (%s)\n", maxLabelLen, label, describeValue(v))
+	for _, f := range fields {
+		if rendersInline(f.value) {
+			if l := len(formatHeader(f.key)); l > maxLabelLen {
+				maxLabelLen = l
 			}
 		}
 	}
+
+	for _, f := range fields {
+		label := formatHeader(f.key)
+		switch {
+		case rendersInline(f.value):
+			fmt.Printf("%s%-*s  %s\n", linePrefix, maxLabelLen, label, inlineValue(f.value))
+		case isJSONObject(f.value):
+			fmt.Printf("%s%s\n", linePrefix, label)
+			printObject(f.value, indent+1)
+		default:
+			fmt.Printf("%s%s\n", linePrefix, label)
+			printArray(f.value, indent+2)
+		}
+	}
 }
 
-func fieldOrder(data json.RawMessage) []string {
-	dec := json.NewDecoder(bytes.NewReader(data))
-	t, err := dec.Token()
-	if err != nil || t != json.Delim('{') {
-		return nil
+func printArray(data json.RawMessage, indent int) {
+	var rows []map[string]interface{}
+	if err := json.Unmarshal(data, &rows); err == nil && len(rows) > 0 {
+		printTable(rows, indent)
+		return
 	}
-
-	var outerKeys []string
-	var firstValue json.RawMessage
-
-	for dec.More() {
-		t, err := dec.Token()
-		if err != nil {
-			break
-		}
-		key, ok := t.(string)
-		if !ok {
-			break
-		}
-		outerKeys = append(outerKeys, key)
-
-		var val json.RawMessage
-		if err := dec.Decode(&val); err != nil {
-			break
-		}
-		if firstValue == nil {
-			firstValue = val
-		}
-	}
-
-	if len(outerKeys) == 1 && firstValue != nil {
-		if inner := extractKeys(firstValue); len(inner) > 0 {
-			return inner
-		}
-	}
-
-	return outerKeys
+	printIndentedJSON(data, indent)
 }
 
-func extractKeys(data json.RawMessage) []string {
-	dec := json.NewDecoder(bytes.NewReader(data))
-	t, err := dec.Token()
-	if err != nil || t != json.Delim('{') {
-		return nil
+func printIndentedJSON(v interface{}, indent int) {
+	prefix := strings.Repeat("  ", indent)
+	out, err := json.MarshalIndent(v, prefix, "  ")
+	if err != nil {
+		return
 	}
+	fmt.Printf("%s%s\n", prefix, string(out))
+}
 
-	var keys []string
-	for dec.More() {
-		t, err := dec.Token()
-		if err != nil {
-			break
-		}
-		key, ok := t.(string)
-		if !ok {
-			break
-		}
-		keys = append(keys, key)
+func isJSONObject(data json.RawMessage) bool {
+	trimmed := bytes.TrimSpace(data)
+	return len(trimmed) > 0 && trimmed[0] == '{'
+}
 
-		var val json.RawMessage
-		if err := dec.Decode(&val); err != nil {
-			break
-		}
+func rendersInline(data json.RawMessage) bool {
+	var v interface{}
+	if err := json.Unmarshal(data, &v); err != nil {
+		return true
 	}
-	return keys
+	switch val := v.(type) {
+	case map[string]interface{}:
+		return len(val) == 0
+	case []interface{}:
+		for _, item := range val {
+			if !isScalar(item) {
+				return false
+			}
+		}
+		return true
+	default:
+		return true
+	}
+}
+
+func inlineValue(data json.RawMessage) string {
+	var v interface{}
+	if err := json.Unmarshal(data, &v); err != nil {
+		return strings.TrimSpace(string(data))
+	}
+	if isScalar(v) {
+		return formatValue(v)
+	}
+	compact, err := json.Marshal(v)
+	if err != nil {
+		return strings.TrimSpace(string(data))
+	}
+	return string(compact)
 }
 
 func printToon(data json.RawMessage) {
@@ -483,17 +511,6 @@ func formatValue(v interface{}) string {
 		return val
 	default:
 		return fmt.Sprintf("%v", val)
-	}
-}
-
-func describeValue(v interface{}) string {
-	switch val := v.(type) {
-	case []interface{}:
-		return fmt.Sprintf("%d items", len(val))
-	case map[string]interface{}:
-		return fmt.Sprintf("%d fields", len(val))
-	default:
-		return "..."
 	}
 }
 

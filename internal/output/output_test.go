@@ -162,3 +162,66 @@ func TestPrintWithPagination_JSONEnvelope(t *testing.T) {
 		t.Error("pagination should be present in envelope")
 	}
 }
+
+func TestPrintPretty_MultiKeyExpandsNestedObject(t *testing.T) {
+	data := json.RawMessage(`{
+		"client": {
+			"name": "Acme Corp",
+			"identifier": "eb29be2e8c203a71ec1d",
+			"status": "active",
+			"currency": "USD"
+		},
+		"recipients": []
+	}`)
+
+	out := captureStdout(t, func() {
+		printPretty(data)
+	})
+
+	for _, want := range []string{"CLIENT", "Acme Corp", "eb29be2e8c203a71ec1d", "active", "USD"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("output missing %q:\n%s", want, out)
+		}
+	}
+	if strings.Contains(out, "fields)") {
+		t.Errorf("output collapsed nested object to summary instead of expanding it:\n%s", out)
+	}
+}
+
+func TestPrintPretty_MultiKeyExpandsNestedArrayOfObjects(t *testing.T) {
+	data := json.RawMessage(`{
+		"client": { "name": "Acme Corp" },
+		"recipients": [
+			{ "name": "Oliver Smith", "email": "oliver.smith@example.com" },
+			{ "name": "Sam Smith", "email": "sam.smith@example.com" }
+		]
+	}`)
+
+	out := captureStdout(t, func() {
+		printPretty(data)
+	})
+
+	for _, want := range []string{"RECIPIENTS", "Oliver Smith", "oliver.smith@example.com", "Sam Smith", "sam.smith@example.com"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("output missing %q:\n%s", want, out)
+		}
+	}
+	if strings.Contains(out, "items)") {
+		t.Errorf("output collapsed nested array to summary instead of expanding it:\n%s", out)
+	}
+}
+
+func TestPrintPretty_SingleKeyUnwrapsNestedObject(t *testing.T) {
+	data := json.RawMessage(`{ "client": { "name": "Acme Corp", "status": "active" } }`)
+
+	out := captureStdout(t, func() {
+		printPretty(data)
+	})
+
+	if !strings.Contains(out, "Acme Corp") || !strings.Contains(out, "active") {
+		t.Errorf("single-key object not unwrapped:\n%s", out)
+	}
+	if strings.Contains(out, "CLIENT") {
+		t.Errorf("single-key object should print inner fields directly, not the wrapper key:\n%s", out)
+	}
+}
