@@ -167,6 +167,11 @@ func printEnvelope(data json.RawMessage, breadcrumbs []Breadcrumb, pagination js
 }
 
 func printPretty(data json.RawMessage) {
+	if msg, ok := thumbsUpNotice(data); ok {
+		fmt.Println(msg)
+		return
+	}
+
 	var arr []map[string]interface{}
 	if err := json.Unmarshal(data, &arr); err == nil {
 		if len(arr) == 0 {
@@ -189,6 +194,23 @@ func printPretty(data json.RawMessage) {
 
 	out, _ := json.MarshalIndent(data, "", "  ")
 	fmt.Println(string(out))
+}
+
+func thumbsUpNotice(data json.RawMessage) (string, bool) {
+	var obj struct {
+		Notice     string `json:"notice"`
+		NoticeCode string `json:"notice_code"`
+	}
+	if err := json.Unmarshal(data, &obj); err != nil {
+		return "", false
+	}
+	if obj.NoticeCode != "thumbs_up" {
+		return "", false
+	}
+	if obj.Notice != "" {
+		return obj.Notice, true
+	}
+	return "success", true
 }
 
 func printTable(rows []map[string]interface{}, indent int) {
