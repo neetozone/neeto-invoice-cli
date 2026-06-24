@@ -211,7 +211,7 @@ func TestPrintPretty_MultiKeyExpandsNestedArrayOfObjects(t *testing.T) {
 	}
 }
 
-func TestPrintPretty_ThumbsUpNoticePrintsSuccess(t *testing.T) {
+func TestPrintPretty_ThumbsUpNoticeFallsBackToSuccess(t *testing.T) {
 	data := json.RawMessage(`{ "notice_code": "thumbs_up" }`)
 
 	out := captureStdout(t, func() {
@@ -221,6 +221,22 @@ func TestPrintPretty_ThumbsUpNoticePrintsSuccess(t *testing.T) {
 	trimmed := strings.TrimSpace(out)
 	if trimmed != "success" {
 		t.Errorf("output = %q, want %q", trimmed, "success")
+	}
+	if strings.Contains(out, "NOTICE CODE") || strings.Contains(out, "thumbs_up") {
+		t.Errorf("output should not render the raw notice_code:\n%s", out)
+	}
+}
+
+func TestPrintPretty_ThumbsUpNoticePrefersNoticeMessage(t *testing.T) {
+	data := json.RawMessage(`{ "notice": "Recipient deleted", "notice_code": "thumbs_up" }`)
+
+	out := captureStdout(t, func() {
+		printPretty(data)
+	})
+
+	trimmed := strings.TrimSpace(out)
+	if trimmed != "Recipient deleted" {
+		t.Errorf("output = %q, want %q", trimmed, "Recipient deleted")
 	}
 	if strings.Contains(out, "NOTICE CODE") || strings.Contains(out, "thumbs_up") {
 		t.Errorf("output should not render the raw notice_code:\n%s", out)

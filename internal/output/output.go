@@ -167,8 +167,8 @@ func printEnvelope(data json.RawMessage, breadcrumbs []Breadcrumb, pagination js
 }
 
 func printPretty(data json.RawMessage) {
-	if isThumbsUpNotice(data) {
-		fmt.Println("success")
+	if msg, ok := thumbsUpNotice(data); ok {
+		fmt.Println(msg)
 		return
 	}
 
@@ -196,14 +196,21 @@ func printPretty(data json.RawMessage) {
 	fmt.Println(string(out))
 }
 
-func isThumbsUpNotice(data json.RawMessage) bool {
+func thumbsUpNotice(data json.RawMessage) (string, bool) {
 	var obj struct {
+		Notice     string `json:"notice"`
 		NoticeCode string `json:"notice_code"`
 	}
 	if err := json.Unmarshal(data, &obj); err != nil {
-		return false
+		return "", false
 	}
-	return obj.NoticeCode == "thumbs_up"
+	if obj.NoticeCode != "thumbs_up" {
+		return "", false
+	}
+	if obj.Notice != "" {
+		return obj.Notice, true
+	}
+	return "success", true
 }
 
 func printTable(rows []map[string]interface{}, indent int) {
