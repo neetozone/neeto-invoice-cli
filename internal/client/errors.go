@@ -59,7 +59,7 @@ func parseAPIError(statusCode int, body []byte) *APIError {
 
 	switch statusCode {
 	case 401:
-		apiErr.Suggestion = "Session expired. Run 'neetoinvoice login' to re-authenticate."
+		apiErr.Suggestion = "Authentication session expired. Run 'neetoinvoice login' to re-authenticate."
 	case 403:
 		apiErr.Suggestion = "You do not have permission to perform this action."
 	case 404:
