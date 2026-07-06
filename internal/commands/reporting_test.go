@@ -28,3 +28,25 @@ func TestReportingCommandsRegistered(t *testing.T) {
 		}
 	}
 }
+
+func TestDiscoveryListCommandsRegistered(t *testing.T) {
+	checks := []struct {
+		parent *cobra.Command
+		sub    string
+	}{
+		{clientsCmd, "list"},
+		{projectsCmd, "list"},
+	}
+
+	for _, check := range checks {
+		found := false
+		for _, sub := range check.parent.Commands() {
+			if sub.Name() == check.sub {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("%s: subcommand %q not registered", check.parent.Name(), check.sub)
+		}
+	}
+}
