@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/neetozone/neeto-invoice-cli/internal/output"
 	"github.com/spf13/cobra"
@@ -10,6 +11,35 @@ import (
 var clientsCmd = &cobra.Command{
 	Use:   "clients",
 	Short: "Manage clients",
+}
+
+var clientsListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List clients (find a client's id by name)",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := getClient(cmd)
+		if err != nil {
+			return err
+		}
+
+		params := url.Values{}
+		if status, _ := cmd.Flags().GetString("status"); status != "" {
+			params.Set("status", status)
+		}
+		if name, _ := cmd.Flags().GetString("name"); name != "" {
+			params.Set("name", name)
+		}
+
+		data, err := c.Get("/clients", params)
+		if err != nil {
+			return err
+		}
+
+		printResource(data, []output.Breadcrumb{
+			{Label: "Show", Command: "neetoinvoice clients show <client-id>"},
+		})
+		return nil
+	},
 }
 
 var clientsShowCmd = &cobra.Command{
@@ -119,6 +149,10 @@ func init() {
 
 	addClientFlags(clientsUpdateCmd)
 
+	clientsListCmd.Flags().String("status", "", "Filter by status: active or archived")
+	clientsListCmd.Flags().String("name", "", "Filter by name (substring match)")
+
+	clientsCmd.AddCommand(clientsListCmd)
 	clientsCmd.AddCommand(clientsShowCmd)
 	clientsCmd.AddCommand(clientsCreateCmd)
 	clientsCmd.AddCommand(clientsUpdateCmd)

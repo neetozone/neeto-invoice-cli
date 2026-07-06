@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/neetozone/neeto-invoice-cli/internal/output"
 	"github.com/spf13/cobra"
@@ -10,6 +11,38 @@ import (
 var projectsCmd = &cobra.Command{
 	Use:   "projects",
 	Short: "Manage projects",
+}
+
+var projectsListCmd = &cobra.Command{
+	Use:   "list",
+	Short: "List projects (find a project's id, or a user's projects)",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := getClient(cmd)
+		if err != nil {
+			return err
+		}
+
+		params := url.Values{}
+		if clientID, _ := cmd.Flags().GetString("client-id"); clientID != "" {
+			params.Set("client_id", clientID)
+		}
+		if userEmail, _ := cmd.Flags().GetString("user-email"); userEmail != "" {
+			params.Set("email", userEmail)
+		}
+		if status, _ := cmd.Flags().GetString("status"); status != "" {
+			params.Set("status", status)
+		}
+
+		data, err := c.Get("/projects", params)
+		if err != nil {
+			return err
+		}
+
+		printResource(data, []output.Breadcrumb{
+			{Label: "Show", Command: "neetoinvoice projects show <project-id>"},
+		})
+		return nil
+	},
 }
 
 var projectsShowCmd = &cobra.Command{
@@ -148,6 +181,11 @@ func init() {
 
 	addProjectFlags(projectsUpdateCmd)
 
+	projectsListCmd.Flags().String("client-id", "", "Filter to one client (identifier or ID)")
+	projectsListCmd.Flags().String("user-email", "", "Filter to a user's projects")
+	projectsListCmd.Flags().String("status", "", "Filter by status: active or archived")
+
+	projectsCmd.AddCommand(projectsListCmd)
 	projectsCmd.AddCommand(projectsShowCmd)
 	projectsCmd.AddCommand(projectsCreateCmd)
 	projectsCmd.AddCommand(projectsUpdateCmd)
