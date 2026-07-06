@@ -58,32 +58,7 @@ var timeEntriesCreateCmd = &cobra.Command{
 			return err
 		}
 
-		clientID, _ := cmd.Flags().GetString("client")
-		projectID, _ := cmd.Flags().GetString("project")
-		taskID, _ := cmd.Flags().GetString("task-id")
-		userEmail, _ := cmd.Flags().GetString("user-email")
-		recordedOn, _ := cmd.Flags().GetString("recorded-on")
-
-		body := map[string]interface{}{
-			"client_id":   clientID,
-			"project_id":  projectID,
-			"task_id":     taskID,
-			"email":       userEmail,
-			"recorded_on": recordedOn,
-		}
-
-		if cmd.Flags().Changed("hours") {
-			hours, _ := cmd.Flags().GetFloat64("hours")
-			body["hours"] = hours
-		}
-		if cmd.Flags().Changed("is-override") {
-			body["is_override"] = true
-		}
-		if notes, _ := cmd.Flags().GetString("notes"); notes != "" {
-			body["notes"] = notes
-		}
-
-		data, err := c.Post("/time-entries", body)
+		data, err := c.Post("/time-entries", timeEntryCreateBody(cmd))
 		if err != nil {
 			return err
 		}
@@ -105,26 +80,7 @@ var timeEntriesUpdateCmd = &cobra.Command{
 			return err
 		}
 
-		body := map[string]interface{}{}
-		if cmd.Flags().Changed("notes") {
-			notes, _ := cmd.Flags().GetString("notes")
-			body["notes"] = notes
-		}
-		if cmd.Flags().Changed("hours") {
-			hours, _ := cmd.Flags().GetFloat64("hours")
-			body["hours"] = hours
-		}
-		if recordedOn, _ := cmd.Flags().GetString("recorded-on"); recordedOn != "" {
-			body["recorded_on"] = recordedOn
-		}
-		if cmd.Flags().Changed("is-override") {
-			body["is_override"] = true
-		}
-		if userEmail, _ := cmd.Flags().GetString("user-email"); userEmail != "" {
-			body["email"] = userEmail
-		}
-
-		data, err := c.Put("/time-entries/"+args[0], body)
+		data, err := c.Put("/time-entries/"+args[0], timeEntryUpdateBody(cmd))
 		if err != nil {
 			return err
 		}
@@ -192,4 +148,57 @@ func init() {
 	timeEntriesCmd.AddCommand(timeEntriesUpdateCmd)
 	timeEntriesCmd.AddCommand(timeEntriesDeleteCmd)
 	rootCmd.AddCommand(timeEntriesCmd)
+}
+
+func timeEntryCreateBody(cmd *cobra.Command) map[string]interface{} {
+	clientID, _ := cmd.Flags().GetString("client")
+	projectID, _ := cmd.Flags().GetString("project")
+	taskID, _ := cmd.Flags().GetString("task-id")
+	userEmail, _ := cmd.Flags().GetString("user-email")
+	recordedOn, _ := cmd.Flags().GetString("recorded-on")
+
+	body := map[string]interface{}{
+		"client_id":   clientID,
+		"project_id":  projectID,
+		"task_id":     taskID,
+		"email":       userEmail,
+		"recorded_on": recordedOn,
+	}
+
+	if cmd.Flags().Changed("hours") {
+		hours, _ := cmd.Flags().GetFloat64("hours")
+		body["hours"] = hours
+	}
+	if cmd.Flags().Changed("is-override") {
+		body["is_override"] = true
+	}
+	if notes, _ := cmd.Flags().GetString("notes"); notes != "" {
+		body["notes"] = notes
+	}
+
+	return body
+}
+
+func timeEntryUpdateBody(cmd *cobra.Command) map[string]interface{} {
+	body := map[string]interface{}{}
+
+	if cmd.Flags().Changed("notes") {
+		notes, _ := cmd.Flags().GetString("notes")
+		body["notes"] = notes
+	}
+	if cmd.Flags().Changed("hours") {
+		hours, _ := cmd.Flags().GetFloat64("hours")
+		body["hours"] = hours
+	}
+	if recordedOn, _ := cmd.Flags().GetString("recorded-on"); recordedOn != "" {
+		body["recorded_on"] = recordedOn
+	}
+	if cmd.Flags().Changed("is-override") {
+		body["is_override"] = true
+	}
+	if userEmail, _ := cmd.Flags().GetString("user-email"); userEmail != "" {
+		body["email"] = userEmail
+	}
+
+	return body
 }
