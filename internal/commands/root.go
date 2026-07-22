@@ -16,9 +16,12 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:           "neetoinvoice",
-	Short:         "NeetoInvoice CLI",
-	Long:          "A command-line interface for NeetoInvoice.",
+	Use:   "neetoinvoice",
+	Short: "NeetoInvoice CLI",
+	Long:  "A command-line interface for NeetoInvoice.",
+	Example: "  $ neetoinvoice projects list\n" +
+		"  $ neetoinvoice time-entries list\n" +
+		"  $ neetoinvoice reports payroll-summary",
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
