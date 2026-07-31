@@ -120,6 +120,10 @@ var teamMembersUpdateCmd = &cobra.Command{
 			body["organization_role"] = v
 		}
 
+		if len(body) == 0 {
+			return fmt.Errorf("Nothing to update. Pass at least one of --email, --first-name, --last-name, --time-zone or --role.")
+		}
+
 		data, err := c.Patch(fmt.Sprintf("/team-members/%s", args[0]), body)
 		if err != nil {
 			return err

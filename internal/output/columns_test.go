@@ -85,6 +85,20 @@ func TestPickColumnsNeverExceedsMaxTableColumns(t *testing.T) {
 	}
 }
 
+func TestPickColumnsHandlesEmptyPayload(t *testing.T) {
+	if got := pickColumns(map[string]interface{}{}); len(got) != 0 {
+		t.Errorf("pickColumns(empty) = %v, want no columns", got)
+	}
+}
+
+func TestPickColumnsWithNoPriorityMatchesFallsBackToSortedScalars(t *testing.T) {
+	payload := sample(t, `{"zebra":1,"apple":2,"mango":3}`)
+	want := []string{"apple", "mango", "zebra"}
+	if got := pickColumns(payload); !reflect.DeepEqual(got, want) {
+		t.Errorf("pickColumns()\n got: %v\nwant: %v", got, want)
+	}
+}
+
 func TestPickColumnsSkipsNonScalars(t *testing.T) {
 	payload := sample(t, `{"name":"Acme","tags":["a","b"],"client":{"id":"1"}}`)
 	got := pickColumns(payload)

@@ -144,8 +144,9 @@ flag. The resource commands are:
 | `monthly-ptos list/update-earned` | Read the monthly PTO report, or set PTO earned. Both need `--month` and `--year`; `update-earned` takes repeatable `--email` and reports `updated`/`skipped` per address. |
 | `reports payroll-summary/timesheet-summary/missing-entries` | Read-only reports over logged time. `payroll-summary` needs `--month`/`--year`; the other two need `--start-date`/`--end-date`, and `missing-entries` also needs `--user-email`. |
 
-Only `time-entries list` paginates (`--page`, `--page-size`); the other list
-commands return the full set.
+`time-entries list` and `team-members list` paginate (`--page`, `--page-size`)
+and carry a `pagination` block in the envelope; the other list commands return
+the full set.
 
 ID conventions: `clients`/`projects` are addressed by their `identifier`
 (short hex string returned in `show` responses); `clients create` and
