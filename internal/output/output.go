@@ -30,12 +30,17 @@ var (
 )
 
 // priorityFields controls which columns appear in tables and their order.
+// Ordered for NeetoInvoice payloads: identity first, then who the row is
+// about, then the time-tracking and PTO figures, then the surrounding
+// client/project/task names, then money and dates.
 var priorityFields = []string{
-	"sid", "name", "title", "email", "status", "kind", "type",
-	"slug", "duration", "spot", "disabled", "default",
-	"host_name", "host_email", "starts_at", "ends_at", "time_zone",
-	"event", "amount", "currency", "wday", "start_time", "end_time",
-	"date", "day",
+	"sid", "id", "identifier", "name", "title",
+	"user_name", "user_email", "email",
+	"recorded_on", "date", "hours", "pto_earned", "pto_used", "net_pto",
+	"task_name", "project_name", "client_name",
+	"status", "role", "kind", "type",
+	"number", "total", "amount", "currency", "hourly_rate",
+	"issue_date", "due_date", "total_hours", "working_days", "time_zone",
 }
 
 const (
