@@ -133,14 +133,21 @@ flag. The resource commands are:
 
 | Command | Description |
 | --- | --- |
-| `clients create/show/update` | Manage clients. `show`/`update` take the client identifier; `create` requires `--name`. |
+| `clients list/create/show/update` | Manage clients. `list` finds an identifier by `--name` or `--status`; `show`/`update` take the client identifier; `create` requires `--name`. |
 | `recipients create/update/delete` | Manage a client's invoice recipients. All take `--client <client-identifier>`; `create` also needs `--name`, `--email`, and `--user-email` (the acting organization user). |
 | `invoices create` | Generate an invoice for a client. Requires `--client` and `--user-email`; needs an invoice `--number` plus line items (`invoice_time_entries`/`invoice_services`) passed via `--data <file.json>`. Dates are MM/DD/YYYY. |
-| `projects create/show/update` | Manage projects. `create` requires `--name`, `--client-id` (the client record ID), at least one `--task`, and `--user-email`. Billing methods: `hourly_project_rate`, `hourly_person_rate`, `hourly_task_rate`, `fixed_price_project`. |
+| `projects list/create/show/update` | Manage projects. `list` filters by `--client-id`, `--user-email` or `--status`; `create` requires `--name`, `--client-id` (the client record ID), at least one `--task`, and `--user-email`. Billing methods: `hourly_project_rate`, `hourly_person_rate`, `hourly_task_rate`, `fixed_price_project`. |
 | `project-users list/create/update/delete` | Manage users on a project. All take `--project <project-identifier>`; roles are `regular_user`/`project_manager`. |
-| `time-entries list/create` | List unbilled time entries for a project, or log time. Both take `--client` and `--project`; `create` also needs `--task-id`, `--user-email`, `--recorded-on` (YYYY-MM-DD), and `--hours`. |
+| `time-entries list/create/update/delete` | List unbilled time entries for a project, or log, edit and remove time. `list`/`create` take `--client` and `--project`; `create` also needs `--task-id`, `--user-email`, `--recorded-on` (YYYY-MM-DD), and `--hours`. `update`/`delete` take the time-entry ID. Billed entries cannot be changed or deleted. Pass `--is-override` to write to a date autolock has closed. |
+| `team-members list/show/create/update/delete` | Manage organization members. `create` takes repeatable `--email` plus `--role`; `show`/`update`/`delete` take the team-member ID. |
+| `forced-ptos list/create` | View and create Forced PTO entries. `list` needs `--start-date` and `--end-date`; `create` needs `--user-email` and `--date`, with `--hours` defaulting to 8. Requires a Forced PTO task on the workspace's HR project. |
+| `monthly-ptos list/update-earned` | Read the monthly PTO report, or set PTO earned. Both need `--month` and `--year`; `update-earned` takes repeatable `--email` and reports `updated`/`skipped` per address. |
+| `reports payroll-summary/timesheet-summary/missing-entries` | Read-only reports over logged time. `payroll-summary` needs `--month`/`--year`; the other two need `--start-date`/`--end-date`, and `missing-entries` also needs `--user-email`. |
+
+Only `time-entries list` paginates (`--page`, `--page-size`); the other list
+commands return the full set.
 
 ID conventions: `clients`/`projects` are addressed by their `identifier`
 (short hex string returned in `show` responses); `clients create` and
 project `--client-id` use the record `id` (UUID). Recipient, project-user,
-task, and time-entry IDs are UUIDs.
+task, team-member, and time-entry IDs are UUIDs.
