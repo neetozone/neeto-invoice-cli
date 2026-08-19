@@ -70,7 +70,7 @@ func TestPickColumnsPutsUsefulFieldsFirst(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			got := pickColumns(sample(t, tc.payload))
+			got := pickColumns([]map[string]interface{}{sample(t, tc.payload)})
 			if !reflect.DeepEqual(got, tc.want) {
 				t.Errorf("pickColumns()\n got: %v\nwant: %v", got, tc.want)
 			}
@@ -80,13 +80,13 @@ func TestPickColumnsPutsUsefulFieldsFirst(t *testing.T) {
 
 func TestPickColumnsNeverExceedsMaxTableColumns(t *testing.T) {
 	payload := sample(t, `{"a":1,"b":2,"c":3,"d":4,"e":5,"f":6,"g":7,"h":8,"i":9,"j":10}`)
-	if got := len(pickColumns(payload)); got > maxTableColumns {
+	if got := len(pickColumns([]map[string]interface{}{payload})); got > maxTableColumns {
 		t.Errorf("pickColumns returned %d columns, want at most %d", got, maxTableColumns)
 	}
 }
 
 func TestPickColumnsHandlesEmptyPayload(t *testing.T) {
-	if got := pickColumns(map[string]interface{}{}); len(got) != 0 {
+	if got := pickColumns([]map[string]interface{}{{}}); len(got) != 0 {
 		t.Errorf("pickColumns(empty) = %v, want no columns", got)
 	}
 }
@@ -94,14 +94,14 @@ func TestPickColumnsHandlesEmptyPayload(t *testing.T) {
 func TestPickColumnsWithNoPriorityMatchesFallsBackToSortedScalars(t *testing.T) {
 	payload := sample(t, `{"zebra":1,"apple":2,"mango":3}`)
 	want := []string{"apple", "mango", "zebra"}
-	if got := pickColumns(payload); !reflect.DeepEqual(got, want) {
+	if got := pickColumns([]map[string]interface{}{payload}); !reflect.DeepEqual(got, want) {
 		t.Errorf("pickColumns()\n got: %v\nwant: %v", got, want)
 	}
 }
 
 func TestPickColumnsSkipsNonScalars(t *testing.T) {
 	payload := sample(t, `{"name":"Acme","tags":["a","b"],"client":{"id":"1"}}`)
-	got := pickColumns(payload)
+	got := pickColumns([]map[string]interface{}{payload})
 	for _, col := range got {
 		if col == "tags" || col == "client" {
 			t.Errorf("pickColumns included non-scalar %q in %v", col, got)
