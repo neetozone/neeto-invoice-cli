@@ -246,18 +246,7 @@ func printTable(rows []map[string]interface{}, indent int) {
 	widths := calculateWidths(headers, grid, indent)
 	pad := strings.Repeat(" ", colPadding)
 
-	fmt.Print(prefix)
-	for i, h := range headers {
-		if i > 0 {
-			fmt.Print(pad)
-		}
-		cell := truncate(h, widths[i])
-		if i < len(headers)-1 {
-			cell = padRight(cell, widths[i])
-		}
-		fmt.Print(cell)
-	}
-	fmt.Println()
+	printGridLine(headers, widths, pad, prefix, nil)
 
 	fmt.Print(prefix)
 	for i, w := range widths {
@@ -268,20 +257,74 @@ func printTable(rows []map[string]interface{}, indent int) {
 	}
 	fmt.Println()
 
+	wrapping := wrappingColumns(grid)
 	for _, row := range grid {
-		fmt.Print(prefix)
+		printGridLine(row, widths, pad, prefix, wrapping)
+	}
+}
+
+func wrappingColumns(grid [][]string) []bool {
+	if len(grid) == 0 {
+		return nil
+	}
+	wrapping := make([]bool, len(grid[0]))
+	for _, row := range grid {
 		for i, val := range row {
+			if isURL(val) {
+				wrapping[i] = true
+			}
+		}
+	}
+	return wrapping
+}
+
+func printGridLine(cells []string, widths []int, pad string, prefix string, wrapping []bool) {
+	segments := make([][]string, len(cells))
+	height := 1
+	for i, val := range cells {
+		if wrapping != nil && wrapping[i] {
+			segments[i] = wrapRunes(val, widths[i])
+		} else {
+			segments[i] = []string{truncate(val, widths[i])}
+		}
+		if len(segments[i]) > height {
+			height = len(segments[i])
+		}
+	}
+
+	for line := 0; line < height; line++ {
+		fmt.Print(prefix)
+		for i := range cells {
 			if i > 0 {
 				fmt.Print(pad)
 			}
-			cell := truncate(val, widths[i])
-			if i < len(row)-1 {
+			var cell string
+			if line < len(segments[i]) {
+				cell = segments[i][line]
+			}
+			if i < len(cells)-1 {
 				cell = padRight(cell, widths[i])
 			}
 			fmt.Print(cell)
 		}
 		fmt.Println()
 	}
+}
+
+func wrapRunes(s string, width int) []string {
+	runes := []rune(s)
+	if width <= 0 || len(runes) <= width {
+		return []string{s}
+	}
+	var out []string
+	for start := 0; start < len(runes); start += width {
+		end := start + width
+		if end > len(runes) {
+			end = len(runes)
+		}
+		out = append(out, string(runes[start:end]))
+	}
+	return out
 }
 
 func pickColumns(rows []map[string]interface{}) []string {
@@ -338,7 +381,6 @@ func pickColumns(rows []map[string]interface{}) []string {
 
 func calculateWidths(headers []string, grid [][]string, indent int) []int {
 	widths := make([]int, len(headers))
-	protected := make([]bool, len(headers))
 	for i, h := range headers {
 		widths[i] = displayWidth(h)
 	}
@@ -347,9 +389,6 @@ func calculateWidths(headers []string, grid [][]string, indent int) []int {
 			if w := displayWidth(val); w > widths[i] {
 				widths[i] = w
 			}
-			if isURL(val) {
-				protected[i] = true
-			}
 		}
 	}
 
@@ -357,26 +396,43 @@ func calculateWidths(headers []string, grid [][]string, indent int) []int {
 	totalPad := (len(headers)-1)*colPadding + indent*2
 	available := termWidth - totalPad
 
-	total, flexible := 0, 0
-	for i, w := range widths {
+	total := 0
+	for _, w := range widths {
 		total += w
-		if !protected[i] {
-			flexible += w
-		}
 	}
 
-	if total <= available || flexible == 0 {
+	if total <= available {
 		return widths
 	}
 
-	budget := max(0, available-(total-flexible))
 	for i := range widths {
-		if !protected[i] {
-			widths[i] = min(widths[i], max(minColWidth, widths[i]*budget/flexible))
-		}
+		widths[i] = min(widths[i], max(minColWidth, widths[i]*available/total))
 	}
 
-	return widths
+	return shrinkToFit(widths, available)
+}
+
+func shrinkToFit(widths []int, available int) []int {
+	for {
+		total := 0
+		for _, w := range widths {
+			total += w
+		}
+		if total <= available {
+			return widths
+		}
+
+		widest, target := 0, -1
+		for i, w := range widths {
+			if w > minColWidth && w > widest {
+				widest, target = w, i
+			}
+		}
+		if target < 0 {
+			return widths
+		}
+		widths[target]--
+	}
 }
 
 type rawField struct {
