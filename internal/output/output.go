@@ -369,8 +369,6 @@ func calculateWidths(headers []string, grid [][]string, indent int) []int {
 		return widths
 	}
 
-	// URL columns keep their full width; the rest absorb the shortfall, but
-	// never shrink past minColWidth nor grow beyond what their content needs.
 	budget := max(0, available-(total-flexible))
 	for i := range widths {
 		if !protected[i] {
