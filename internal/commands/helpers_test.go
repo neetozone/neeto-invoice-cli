@@ -139,6 +139,9 @@ func TestPrintListWithInlinePagination(t *testing.T) {
 				if bytes.Contains([]byte(out), []byte("current_page_number")) {
 					t.Errorf("output = %q, want no pagination block", out)
 				}
+				if len(bytes.TrimSpace([]byte(out))) != 0 {
+					t.Errorf("output = %q, want empty output for malformed JSON", out)
+				}
 				return
 			}
 
@@ -180,8 +183,8 @@ func TestPrintListWithInlinePagination(t *testing.T) {
 				t.Errorf("page_size = %d, want 10", pagination.PageSize)
 			}
 
-			if bytes.Contains(envelope.Data, []byte("next_page")) || bytes.Contains(envelope.Data, []byte("prev_page")) {
-				t.Errorf("data still contains inline paging keys: %s", envelope.Data)
+			if bytes.Contains([]byte(out), []byte("next_page")) || bytes.Contains([]byte(out), []byte("prev_page")) {
+				t.Errorf("rendered output still contains inline paging keys: %s", out)
 			}
 		})
 	}
