@@ -116,6 +116,7 @@ neetoinvoice setup codex       # Add a NeetoInvoice section to AGENTS.md
 ```
 
 Every command except `setup claude` writes into the current project directory, so
-run it from the root of the project the assistant works in. Existing content in
-those files is kept. Re-running after an upgrade replaces the NeetoInvoice section
-instead of adding a duplicate.
+run it from the root of the project the assistant works in. `setup copilot`,
+`setup gemini` and `setup codex` keep the existing content of their file and,
+when re-run after an upgrade, replace the NeetoInvoice section instead of
+adding a duplicate.
