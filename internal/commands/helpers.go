@@ -40,6 +40,48 @@ func printList(data json.RawMessage, resourceKey string, breadcrumbs []output.Br
 	}
 }
 
+type inlinePaginationKeys struct {
+	TotalRecords string
+	TotalPages   string
+	CurrentPage  string
+	PageSize     string
+}
+
+func printListWithInlinePagination(data json.RawMessage, resourceKey string, keys inlinePaginationKeys, breadcrumbs []output.Breadcrumb) {
+	var parsed map[string]json.RawMessage
+	if err := json.Unmarshal(data, &parsed); err != nil {
+		output.Print(data, breadcrumbs)
+		return
+	}
+
+	items, hasItems := parsed[resourceKey]
+	if !hasItems {
+		output.Print(data, breadcrumbs)
+		return
+	}
+
+	pagination := client.Pagination{
+		TotalRecords:      intFromRaw(parsed[keys.TotalRecords]),
+		TotalPages:        intFromRaw(parsed[keys.TotalPages]),
+		CurrentPageNumber: intFromRaw(parsed[keys.CurrentPage]),
+		PageSize:          intFromRaw(parsed[keys.PageSize]),
+	}
+
+	paginationJSON, err := json.Marshal(pagination)
+	if err != nil {
+		output.Print(items, breadcrumbs)
+		return
+	}
+
+	output.PrintWithPagination(items, paginationJSON, breadcrumbs)
+}
+
+func intFromRaw(raw json.RawMessage) int {
+	var n int
+	_ = json.Unmarshal(raw, &n)
+	return n
+}
+
 func printResource(data json.RawMessage, breadcrumbs []output.Breadcrumb) {
 	output.Print(data, breadcrumbs)
 }
