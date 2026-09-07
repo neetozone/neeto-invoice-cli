@@ -88,6 +88,7 @@ func init() {
 	_ = invoicesCreateCmd.Flags().MarkDeprecated("data", "use --json-file instead")
 	_ = invoicesCreateCmd.MarkFlagRequired("client")
 	_ = invoicesCreateCmd.MarkFlagRequired("user-email")
+	allowJSONFileToSatisfyRequiredFlags(invoicesCreateCmd)
 
 	invoicesCmd.AddCommand(invoicesCreateCmd)
 	register(func(root *cobra.Command) { root.AddCommand(invoicesCmd) })

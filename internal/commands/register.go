@@ -46,6 +46,10 @@ func addPaginationFlags(cmd *cobra.Command) { cli.AddPaginationFlags(0, cmd) }
 
 func readJSONFile(path string) (map[string]any, error) { return cli.ReadJSONFile(path) }
 
+func allowJSONFileToSatisfyRequiredFlags(cmd *cobra.Command) {
+	cli.AllowJSONFileToSatisfyRequiredFlags(cmd)
+}
+
 func printMessage(msg string) { app.PrintMessage(msg) }
 
 func thumbsUpNotice(data json.RawMessage) (string, bool) {
