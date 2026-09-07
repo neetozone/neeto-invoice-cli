@@ -40,12 +40,7 @@ var timeEntriesListCmd = &cobra.Command{
 			return err
 		}
 
-		printListWithInlinePagination(data, "time_entries", inlinePaginationKeys{
-			TotalRecords: "total_count",
-			TotalPages:   "total_pages",
-			CurrentPage:  "page",
-			PageSize:     "page_size",
-		}, []output.Breadcrumb{
+		printList(data, "time_entries", []output.Breadcrumb{
 			{Label: "Log time", Command: "neetoinvoice time-entries create --client <client-id> --project <project-id> --task-id <task-id> --user-email <email> --recorded-on <date> --hours <hours>"},
 		})
 		return nil

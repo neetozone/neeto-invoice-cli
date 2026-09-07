@@ -48,48 +48,6 @@ func readJSONFile(path string) (map[string]any, error) { return cli.ReadJSONFile
 
 func printMessage(msg string) { app.PrintMessage(msg) }
 
-type inlinePaginationKeys struct {
-	TotalRecords string
-	TotalPages   string
-	CurrentPage  string
-	PageSize     string
-}
-
-func printListWithInlinePagination(data json.RawMessage, resourceKey string, keys inlinePaginationKeys, breadcrumbs []output.Breadcrumb) {
-	var parsed map[string]json.RawMessage
-	if err := json.Unmarshal(data, &parsed); err != nil {
-		app.Printer.Print(data, breadcrumbs)
-		return
-	}
-
-	items, hasItems := parsed[resourceKey]
-	if !hasItems {
-		app.Printer.Print(data, breadcrumbs)
-		return
-	}
-
-	pagination := client.Pagination{
-		TotalRecords:      intFromRaw(parsed[keys.TotalRecords]),
-		TotalPages:        intFromRaw(parsed[keys.TotalPages]),
-		CurrentPageNumber: intFromRaw(parsed[keys.CurrentPage]),
-		PageSize:          intFromRaw(parsed[keys.PageSize]),
-	}
-
-	paginationJSON, err := json.Marshal(pagination)
-	if err != nil {
-		app.Printer.Print(items, breadcrumbs)
-		return
-	}
-
-	app.Printer.PrintWithPagination(items, paginationJSON, breadcrumbs)
-}
-
-func intFromRaw(raw json.RawMessage) int {
-	var n int
-	_ = json.Unmarshal(raw, &n)
-	return n
-}
-
 func thumbsUpNotice(data json.RawMessage) (string, bool) {
 	var obj struct {
 		Notice     string `json:"notice"`
