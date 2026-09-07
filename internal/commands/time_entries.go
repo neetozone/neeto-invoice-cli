@@ -1,8 +1,6 @@
 package commands
 
 import (
-	"encoding/json"
-
 	"github.com/neetozone/neeto-cli-commons/output"
 	"github.com/spf13/cobra"
 )
@@ -111,9 +109,7 @@ var timeEntriesDeleteCmd = &cobra.Command{
 			return err
 		}
 
-		printActionResult(json.RawMessage(`{"message":"Time entry deleted."}`), []output.Breadcrumb{
-			{Label: "List", Command: "neetoinvoice time-entries list --client <client-id> --project <project-id>"},
-		})
+		printMessage("Time entry deleted.")
 		return nil
 	},
 }
