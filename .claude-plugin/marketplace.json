@@ -8,7 +8,7 @@
     {
       "name": "neetoinvoice",
       "source": "./",
-      "description": "NeetoInvoice CLI"
+      "description": "manage clients, invoices, projects and time entries from the terminal"
     }
   ]
 }

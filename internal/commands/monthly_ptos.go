@@ -90,5 +90,5 @@ func init() {
 
 	monthlyPtosCmd.AddCommand(monthlyPtosListCmd)
 	monthlyPtosCmd.AddCommand(monthlyPtosUpdateEarnedCmd)
-	rootCmd.AddCommand(monthlyPtosCmd)
+	register(func(root *cobra.Command) { root.AddCommand(monthlyPtosCmd) })
 }

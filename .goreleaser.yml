@@ -14,9 +14,9 @@ builds:
       - arm64
     ldflags:
       - -s -w
-      - -X github.com/neetozone/neeto-invoice-cli/internal/commands.Version={{.Version}}
-      - -X github.com/neetozone/neeto-invoice-cli/internal/commands.Commit={{.ShortCommit}}
-      - -X github.com/neetozone/neeto-invoice-cli/internal/commands.Date={{.Date}}
+      - -X main.version={{.Version}}
+      - -X main.commit={{.ShortCommit}}
+      - -X main.date={{.Date}}
 
 archives:
   - format: tar.gz
@@ -24,6 +24,11 @@ archives:
       - goos: windows
         format: zip
     name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+blobs:
+  - provider: s3
+    bucket: "neeto-downloads"
+    directory: "cli/NeetoInvoice/v{{ .Version }}"
 
 brews:
   - name: neetoinvoice
@@ -35,7 +40,7 @@ brews:
     commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
     url_template: "https://downloads.neeto.com/cli/NeetoInvoice/v{{ .Version }}/{{ .ArtifactName }}"
     homepage: "https://neetoinvoice.com"
-    description: "NeetoInvoice CLI"
+    description: "NeetoInvoice CLI — manage clients, invoices, projects and time entries from the terminal"
     install: |
       bin.install "neetoinvoice"
 

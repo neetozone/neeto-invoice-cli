@@ -85,5 +85,5 @@ func init() {
 
 	forcedPtosCmd.AddCommand(forcedPtosListCmd)
 	forcedPtosCmd.AddCommand(forcedPtosCreateCmd)
-	rootCmd.AddCommand(forcedPtosCmd)
+	register(func(root *cobra.Command) { root.AddCommand(forcedPtosCmd) })
 }

@@ -3,7 +3,7 @@ package commands
 import (
 	"encoding/json"
 
-	"github.com/neetozone/neeto-invoice-cli/internal/output"
+	"github.com/neetozone/neeto-cli-commons/output"
 	"github.com/spf13/cobra"
 )
 
@@ -68,7 +68,7 @@ var timeEntriesCreateCmd = &cobra.Command{
 			return err
 		}
 
-		printActionResult(data, []output.Breadcrumb{
+		printCreateResult(data, []output.Breadcrumb{
 			{Label: "List", Command: "neetoinvoice time-entries list --client <client-id> --project <project-id>"},
 		})
 		return nil
@@ -152,7 +152,7 @@ func init() {
 	timeEntriesCmd.AddCommand(timeEntriesCreateCmd)
 	timeEntriesCmd.AddCommand(timeEntriesUpdateCmd)
 	timeEntriesCmd.AddCommand(timeEntriesDeleteCmd)
-	rootCmd.AddCommand(timeEntriesCmd)
+	register(func(root *cobra.Command) { root.AddCommand(timeEntriesCmd) })
 }
 
 func timeEntryCreateBody(cmd *cobra.Command) map[string]interface{} {
