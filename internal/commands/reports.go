@@ -114,5 +114,5 @@ func init() {
 	reportsCmd.AddCommand(reportsPayrollSummaryCmd)
 	reportsCmd.AddCommand(reportsMissingEntriesCmd)
 	reportsCmd.AddCommand(reportsTimesheetSummaryCmd)
-	rootCmd.AddCommand(reportsCmd)
+	register(func(root *cobra.Command) { root.AddCommand(reportsCmd) })
 }

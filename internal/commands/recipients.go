@@ -3,7 +3,7 @@ package commands
 import (
 	"fmt"
 
-	"github.com/neetozone/neeto-invoice-cli/internal/output"
+	"github.com/neetozone/neeto-cli-commons/output"
 	"github.com/spf13/cobra"
 )
 
@@ -34,7 +34,7 @@ var recipientsCreateCmd = &cobra.Command{
 			return err
 		}
 
-		printActionResult(data, []output.Breadcrumb{
+		printCreateResult(data, []output.Breadcrumb{
 			{Label: "Client", Command: "neetoinvoice clients show <client-id>"},
 		})
 		return nil
@@ -84,7 +84,7 @@ var recipientsDeleteCmd = &cobra.Command{
 			return err
 		}
 
-		output.PrintMessage("Recipient deleted.")
+		printMessage("Recipient deleted.")
 		return nil
 	},
 }
@@ -123,5 +123,5 @@ func init() {
 	recipientsCmd.AddCommand(recipientsCreateCmd)
 	recipientsCmd.AddCommand(recipientsUpdateCmd)
 	recipientsCmd.AddCommand(recipientsDeleteCmd)
-	rootCmd.AddCommand(recipientsCmd)
+	register(func(root *cobra.Command) { root.AddCommand(recipientsCmd) })
 }

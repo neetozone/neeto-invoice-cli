@@ -1,6 +1,6 @@
 {
   "name": "neetoinvoice",
-  "description": "NeetoInvoice CLI",
+  "description": "manage clients, invoices, projects and time entries from the terminal",
   "author": {
     "name": "BigBinary",
     "email": "support@bigbinary.com"

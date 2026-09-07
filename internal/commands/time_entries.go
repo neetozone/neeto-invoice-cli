@@ -1,9 +1,7 @@
 package commands
 
 import (
-	"encoding/json"
-
-	"github.com/neetozone/neeto-invoice-cli/internal/output"
+	"github.com/neetozone/neeto-cli-commons/output"
 	"github.com/spf13/cobra"
 )
 
@@ -42,12 +40,7 @@ var timeEntriesListCmd = &cobra.Command{
 			return err
 		}
 
-		printListWithInlinePagination(data, "time_entries", inlinePaginationKeys{
-			TotalRecords: "total_count",
-			TotalPages:   "total_pages",
-			CurrentPage:  "page",
-			PageSize:     "page_size",
-		}, []output.Breadcrumb{
+		printList(data, "time_entries", []output.Breadcrumb{
 			{Label: "Log time", Command: "neetoinvoice time-entries create --client <client-id> --project <project-id> --task-id <task-id> --user-email <email> --recorded-on <date> --hours <hours>"},
 		})
 		return nil
@@ -68,7 +61,7 @@ var timeEntriesCreateCmd = &cobra.Command{
 			return err
 		}
 
-		printActionResult(data, []output.Breadcrumb{
+		printCreateResult(data, []output.Breadcrumb{
 			{Label: "List", Command: "neetoinvoice time-entries list --client <client-id> --project <project-id>"},
 		})
 		return nil
@@ -111,9 +104,7 @@ var timeEntriesDeleteCmd = &cobra.Command{
 			return err
 		}
 
-		printActionResult(json.RawMessage(`{"message":"Time entry deleted."}`), []output.Breadcrumb{
-			{Label: "List", Command: "neetoinvoice time-entries list --client <client-id> --project <project-id>"},
-		})
+		printMessage("Time entry deleted.")
 		return nil
 	},
 }
@@ -152,7 +143,7 @@ func init() {
 	timeEntriesCmd.AddCommand(timeEntriesCreateCmd)
 	timeEntriesCmd.AddCommand(timeEntriesUpdateCmd)
 	timeEntriesCmd.AddCommand(timeEntriesDeleteCmd)
-	rootCmd.AddCommand(timeEntriesCmd)
+	register(func(root *cobra.Command) { root.AddCommand(timeEntriesCmd) })
 }
 
 func timeEntryCreateBody(cmd *cobra.Command) map[string]interface{} {

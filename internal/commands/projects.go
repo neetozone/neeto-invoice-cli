@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/neetozone/neeto-invoice-cli/internal/output"
+	"github.com/neetozone/neeto-cli-commons/output"
 	"github.com/spf13/cobra"
 )
 
@@ -38,7 +38,7 @@ var projectsListCmd = &cobra.Command{
 			return err
 		}
 
-		printResource(data, []output.Breadcrumb{
+		printList(data, "projects", []output.Breadcrumb{
 			{Label: "Show", Command: "neetoinvoice projects show <project-id>"},
 		})
 		return nil
@@ -88,7 +88,7 @@ var projectsCreateCmd = &cobra.Command{
 			return err
 		}
 
-		printActionResult(data, []output.Breadcrumb{
+		printCreateResult(data, []output.Breadcrumb{
 			{Label: "Show", Command: "neetoinvoice projects show <project-id>"},
 			{Label: "Add user", Command: "neetoinvoice project-users create --project <project-id> --user-id <user-id>"},
 		})
@@ -189,5 +189,5 @@ func init() {
 	projectsCmd.AddCommand(projectsShowCmd)
 	projectsCmd.AddCommand(projectsCreateCmd)
 	projectsCmd.AddCommand(projectsUpdateCmd)
-	rootCmd.AddCommand(projectsCmd)
+	register(func(root *cobra.Command) { root.AddCommand(projectsCmd) })
 }

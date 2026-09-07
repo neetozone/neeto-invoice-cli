@@ -3,7 +3,7 @@ package commands
 import (
 	"fmt"
 
-	"github.com/neetozone/neeto-invoice-cli/internal/output"
+	"github.com/neetozone/neeto-cli-commons/output"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +19,7 @@ var invoicesCreateCmd = &cobra.Command{
 
 Scalar fields are available as flags. For line items (invoice_time_entries,
 invoice_services, invoice_expenses, tax_details, custom_attributes, invoice_details)
-pass a JSON file via --data; flag values override the file's top-level keys.`,
+pass a JSON file via --json-file; flag values override the file's top-level keys.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		c, err := getClient(cmd)
 		if err != nil {
@@ -29,7 +29,11 @@ pass a JSON file via --data; flag values override the file's top-level keys.`,
 		clientID, _ := cmd.Flags().GetString("client")
 
 		body := map[string]interface{}{}
-		if dataFile, _ := cmd.Flags().GetString("data"); dataFile != "" {
+		dataFile, _ := cmd.Flags().GetString("json-file")
+		if dataFile == "" {
+			dataFile, _ = cmd.Flags().GetString("data")
+		}
+		if dataFile != "" {
 			body, err = readJSONFile(dataFile)
 			if err != nil {
 				return err
@@ -63,7 +67,7 @@ pass a JSON file via --data; flag values override the file's top-level keys.`,
 			return err
 		}
 
-		printActionResult(data, []output.Breadcrumb{
+		printCreateResult(data, []output.Breadcrumb{
 			{Label: "Client", Command: "neetoinvoice clients show <client-id>"},
 		})
 		return nil
@@ -79,10 +83,13 @@ func init() {
 	invoicesCreateCmd.Flags().String("notes", "", "Invoice notes")
 	invoicesCreateCmd.Flags().StringSlice("project-id", nil, "Project ID(s) to invoice (repeatable)")
 	invoicesCreateCmd.Flags().Bool("send-email", false, "Email the invoice to the client's recipients")
+	invoicesCreateCmd.Flags().String("json-file", "", "Path to a JSON file with the full invoice payload (line items, taxes, email details)")
 	invoicesCreateCmd.Flags().String("data", "", "Path to a JSON file with the full invoice payload (line items, taxes, email details)")
+	_ = invoicesCreateCmd.Flags().MarkDeprecated("data", "use --json-file instead")
 	_ = invoicesCreateCmd.MarkFlagRequired("client")
 	_ = invoicesCreateCmd.MarkFlagRequired("user-email")
+	allowJSONFileToSatisfyRequiredFlags(invoicesCreateCmd)
 
 	invoicesCmd.AddCommand(invoicesCreateCmd)
-	rootCmd.AddCommand(invoicesCmd)
+	register(func(root *cobra.Command) { root.AddCommand(invoicesCmd) })
 }

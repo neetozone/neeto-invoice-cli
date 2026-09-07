@@ -3,7 +3,7 @@ package commands
 import (
 	"fmt"
 
-	"github.com/neetozone/neeto-invoice-cli/internal/output"
+	"github.com/neetozone/neeto-cli-commons/output"
 	"github.com/spf13/cobra"
 )
 
@@ -148,7 +148,7 @@ var teamMembersDeleteCmd = &cobra.Command{
 			return err
 		}
 
-		output.PrintMessage("Team member removed.")
+		printMessage("Team member removed.")
 		return nil
 	},
 }
@@ -175,5 +175,5 @@ func init() {
 	teamMembersCmd.AddCommand(teamMembersCreateCmd)
 	teamMembersCmd.AddCommand(teamMembersUpdateCmd)
 	teamMembersCmd.AddCommand(teamMembersDeleteCmd)
-	rootCmd.AddCommand(teamMembersCmd)
+	register(func(root *cobra.Command) { root.AddCommand(teamMembersCmd) })
 }
