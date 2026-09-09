@@ -29,12 +29,8 @@ pass a JSON file via --json-file; flag values override the file's top-level keys
 		clientID, _ := cmd.Flags().GetString("client")
 
 		body := map[string]interface{}{}
-		dataFile, _ := cmd.Flags().GetString("json-file")
-		if dataFile == "" {
-			dataFile, _ = cmd.Flags().GetString("data")
-		}
-		if dataFile != "" {
-			body, err = readJSONFile(dataFile)
+		if payloadFile := invoicePayloadFile(cmd); payloadFile != "" {
+			body, err = readJSONFile(payloadFile)
 			if err != nil {
 				return err
 			}
@@ -88,8 +84,26 @@ func init() {
 	_ = invoicesCreateCmd.Flags().MarkDeprecated("data", "use --json-file instead")
 	_ = invoicesCreateCmd.MarkFlagRequired("client")
 	_ = invoicesCreateCmd.MarkFlagRequired("user-email")
+	_ = invoicesCreateCmd.MarkFlagRequired("number")
+	invoicesCreateCmd.PreRunE = func(cmd *cobra.Command, args []string) error {
+		payloadFile := invoicePayloadFile(cmd)
+		if payloadFile == "" {
+			return nil
+		}
+
+		return cmd.Flags().Set("json-file", payloadFile)
+	}
 	allowJSONFileToSatisfyRequiredFlags(invoicesCreateCmd)
 
 	invoicesCmd.AddCommand(invoicesCreateCmd)
 	register(func(root *cobra.Command) { root.AddCommand(invoicesCmd) })
+}
+
+func invoicePayloadFile(cmd *cobra.Command) string {
+	if jsonFile, _ := cmd.Flags().GetString("json-file"); jsonFile != "" {
+		return jsonFile
+	}
+
+	dataFile, _ := cmd.Flags().GetString("data")
+	return dataFile
 }
