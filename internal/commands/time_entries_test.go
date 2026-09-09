@@ -35,6 +35,19 @@ func TestTimeEntriesFlags(t *testing.T) {
 	}
 }
 
+func TestTimeEntriesRequireUserEmailForMutations(t *testing.T) {
+	for _, cmd := range []*cobra.Command{timeEntriesUpdateCmd, timeEntriesDeleteCmd} {
+		flag := cmd.Flags().Lookup("user-email")
+		if flag == nil {
+			t.Errorf("user-email flag missing on %s", cmd.Name())
+			continue
+		}
+		if _, ok := flag.Annotations[cobra.BashCompOneRequiredFlag]; !ok {
+			t.Errorf("user-email flag is not required on %s", cmd.Name())
+		}
+	}
+}
+
 func newTestCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Flags().String("client", "", "")

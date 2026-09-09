@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"net/url"
+
 	"github.com/neetozone/neeto-cli-commons/output"
 	"github.com/spf13/cobra"
 )
@@ -100,7 +102,11 @@ var timeEntriesDeleteCmd = &cobra.Command{
 			return err
 		}
 
-		if err := c.Delete("/time-entries/" + args[0]); err != nil {
+		params := url.Values{}
+		userEmail, _ := cmd.Flags().GetString("user-email")
+		params.Set("email", userEmail)
+
+		if err := c.DeleteWithParams("/time-entries/"+args[0], params); err != nil {
 			return err
 		}
 
@@ -137,7 +143,11 @@ func init() {
 	timeEntriesUpdateCmd.Flags().Float64("hours", 0, "New hours")
 	timeEntriesUpdateCmd.Flags().String("recorded-on", "", "New date (YYYY-MM-DD)")
 	timeEntriesUpdateCmd.Flags().Bool("is-override", false, "Override autolock for a locked date")
-	timeEntriesUpdateCmd.Flags().String("user-email", "", "Acting user's email")
+	timeEntriesUpdateCmd.Flags().String("user-email", "", "Email of the user the time entry belongs to")
+	_ = timeEntriesUpdateCmd.MarkFlagRequired("user-email")
+
+	timeEntriesDeleteCmd.Flags().String("user-email", "", "Email of the user the time entry belongs to")
+	_ = timeEntriesDeleteCmd.MarkFlagRequired("user-email")
 
 	timeEntriesCmd.AddCommand(timeEntriesListCmd)
 	timeEntriesCmd.AddCommand(timeEntriesCreateCmd)
