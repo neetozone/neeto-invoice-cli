@@ -3,6 +3,7 @@ package commands
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
@@ -15,6 +16,30 @@ func TestInvoicesCreateRequiresNumber(t *testing.T) {
 	}
 	if _, ok := flag.Annotations[cobra.BashCompOneRequiredFlag]; !ok {
 		t.Error("number flag is not required on invoices create")
+	}
+}
+
+func TestInvoicesCreateFailsWithoutNumber(t *testing.T) {
+	if err := invoicesCreateCmd.ParseFlags([]string{"--client", "c1", "--user-email", "sam@example.com"}); err != nil {
+		t.Fatalf("ParseFlags() error = %v", err)
+	}
+	t.Cleanup(func() {
+		for _, name := range []string{"client", "user-email"} {
+			_ = invoicesCreateCmd.Flags().Set(name, "")
+			invoicesCreateCmd.Flags().Lookup(name).Changed = false
+		}
+	})
+
+	if err := invoicesCreateCmd.PreRunE(invoicesCreateCmd, nil); err != nil {
+		t.Fatalf("PreRunE() error = %v", err)
+	}
+
+	err := invoicesCreateCmd.ValidateRequiredFlags()
+	if err == nil {
+		t.Fatal("ValidateRequiredFlags() = nil, want an error naming number")
+	}
+	if !strings.Contains(err.Error(), "number") {
+		t.Errorf("ValidateRequiredFlags() error = %v, want it to name number", err)
 	}
 }
 

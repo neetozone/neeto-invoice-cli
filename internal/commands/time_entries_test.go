@@ -48,6 +48,22 @@ func TestTimeEntriesRequireUserEmailForMutations(t *testing.T) {
 	}
 }
 
+func TestTimeEntryDeleteParamsSendsEmail(t *testing.T) {
+	cmd := &cobra.Command{}
+	cmd.Flags().String("user-email", "", "")
+	if err := cmd.ParseFlags([]string{"--user-email", "sam@example.com"}); err != nil {
+		t.Fatalf("ParseFlags() error = %v", err)
+	}
+
+	params := timeEntryDeleteParams(cmd)
+	if got := params.Get("email"); got != "sam@example.com" {
+		t.Errorf("email = %q, want sam@example.com", got)
+	}
+	if got := params.Encode(); got != "email=sam%40example.com" {
+		t.Errorf("query = %q, want email=sam%%40example.com", got)
+	}
+}
+
 func newTestCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Flags().String("client", "", "")

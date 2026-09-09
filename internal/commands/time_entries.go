@@ -102,11 +102,7 @@ var timeEntriesDeleteCmd = &cobra.Command{
 			return err
 		}
 
-		params := url.Values{}
-		userEmail, _ := cmd.Flags().GetString("user-email")
-		params.Set("email", userEmail)
-
-		if err := c.DeleteWithParams("/time-entries/"+args[0], params); err != nil {
+		if err := c.DeleteWithParams("/time-entries/"+args[0], timeEntryDeleteParams(cmd)); err != nil {
 			return err
 		}
 
@@ -183,6 +179,15 @@ func timeEntryCreateBody(cmd *cobra.Command) map[string]interface{} {
 	}
 
 	return body
+}
+
+func timeEntryDeleteParams(cmd *cobra.Command) url.Values {
+	userEmail, _ := cmd.Flags().GetString("user-email")
+
+	params := url.Values{}
+	params.Set("email", userEmail)
+
+	return params
 }
 
 func timeEntryUpdateBody(cmd *cobra.Command) map[string]interface{} {
