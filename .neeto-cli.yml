@@ -8,4 +8,4 @@ root_examples:
   - neetoinvoice time-entries list --client <client-id> --project <project-id>
   - neetoinvoice invoices create --client <client-id> --user-email <email>
 priority_fields: [identifier, name, title, user_name, user_email, email, recorded_on, date, hours, pto_earned, pto_used, net_pto, task_name, project_name, client_name, status, role, kind, type, number, total, amount, currency, hourly_rate, issue_date, due_date, total_hours, working_days, time_zone]
-commons_version: v1.0.2
+commons_version: v1.0.4
