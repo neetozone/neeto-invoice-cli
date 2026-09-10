@@ -58,22 +58,24 @@ func TestTimeEntriesListTaskIDFlagIsOptional(t *testing.T) {
 	}
 }
 
-func newTestListCmd() *cobra.Command {
-	cmd := &cobra.Command{}
-	cmd.Flags().String("client", "", "")
-	cmd.Flags().String("project", "", "")
-	cmd.Flags().String("start-date", "", "")
-	cmd.Flags().String("end-date", "", "")
-	cmd.Flags().String("user-email", "", "")
-	cmd.Flags().String("task-id", "", "")
-	return cmd
+func parseListFlags(t *testing.T, args []string) *cobra.Command {
+	t.Helper()
+
+	if err := timeEntriesListCmd.ParseFlags(args); err != nil {
+		t.Fatalf("ParseFlags() error = %v", err)
+	}
+	t.Cleanup(func() {
+		for _, name := range []string{"client", "project", "start-date", "end-date", "user-email", "task-id"} {
+			_ = timeEntriesListCmd.Flags().Set(name, "")
+			timeEntriesListCmd.Flags().Lookup(name).Changed = false
+		}
+	})
+
+	return timeEntriesListCmd
 }
 
 func TestTimeEntriesListParamsSendsTaskID(t *testing.T) {
-	cmd := newTestListCmd()
-	if err := cmd.ParseFlags([]string{"--client", "c1", "--project", "p1", "--task-id", "task-123"}); err != nil {
-		t.Fatalf("ParseFlags() error = %v", err)
-	}
+	cmd := parseListFlags(t, []string{"--client", "c1", "--project", "p1", "--task-id", "task-123"})
 
 	params := timeEntriesListParams(cmd)
 	if got := params.Get("task_id"); got != "task-123" {
@@ -82,10 +84,7 @@ func TestTimeEntriesListParamsSendsTaskID(t *testing.T) {
 }
 
 func TestTimeEntriesListParamsOmitsTaskIDWhenUnset(t *testing.T) {
-	cmd := newTestListCmd()
-	if err := cmd.ParseFlags([]string{"--client", "c1", "--project", "p1"}); err != nil {
-		t.Fatalf("ParseFlags() error = %v", err)
-	}
+	cmd := parseListFlags(t, []string{"--client", "c1", "--project", "p1"})
 
 	params := timeEntriesListParams(cmd)
 	if params.Has("task_id") {
