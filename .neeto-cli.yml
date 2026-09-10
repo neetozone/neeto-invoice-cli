@@ -2,6 +2,7 @@ pretty_name: NeetoInvoice
 binary_name: neetoinvoice
 short_description: manage clients, invoices, projects and time entries from the terminal
 long_description: A command-line interface for NeetoInvoice. Manage clients, projects, time entries, invoices and PTO reporting.
+docs_url: https://apidocs.neetoinvoice.com/cli/introduction
 api_base_path: /api/external/v2
 root_examples:
   - neetoinvoice clients list
