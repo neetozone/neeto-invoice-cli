@@ -48,6 +48,51 @@ func TestTimeEntriesRequireUserEmailForMutations(t *testing.T) {
 	}
 }
 
+func TestTimeEntriesListTaskIDFlagIsOptional(t *testing.T) {
+	flag := timeEntriesListCmd.Flags().Lookup("task-id")
+	if flag == nil {
+		t.Fatal("task-id flag missing on list")
+	}
+	if _, ok := flag.Annotations[cobra.BashCompOneRequiredFlag]; ok {
+		t.Error("task-id flag should not be required on list")
+	}
+}
+
+func newTestListCmd() *cobra.Command {
+	cmd := &cobra.Command{}
+	cmd.Flags().String("client", "", "")
+	cmd.Flags().String("project", "", "")
+	cmd.Flags().String("start-date", "", "")
+	cmd.Flags().String("end-date", "", "")
+	cmd.Flags().String("user-email", "", "")
+	cmd.Flags().String("task-id", "", "")
+	return cmd
+}
+
+func TestTimeEntriesListParamsSendsTaskID(t *testing.T) {
+	cmd := newTestListCmd()
+	if err := cmd.ParseFlags([]string{"--client", "c1", "--project", "p1", "--task-id", "task-123"}); err != nil {
+		t.Fatalf("ParseFlags() error = %v", err)
+	}
+
+	params := timeEntriesListParams(cmd)
+	if got := params.Get("task_id"); got != "task-123" {
+		t.Errorf("task_id = %q, want task-123", got)
+	}
+}
+
+func TestTimeEntriesListParamsOmitsTaskIDWhenUnset(t *testing.T) {
+	cmd := newTestListCmd()
+	if err := cmd.ParseFlags([]string{"--client", "c1", "--project", "p1"}); err != nil {
+		t.Fatalf("ParseFlags() error = %v", err)
+	}
+
+	params := timeEntriesListParams(cmd)
+	if params.Has("task_id") {
+		t.Error("task_id should be omitted when not provided")
+	}
+}
+
 func TestTimeEntryDeleteParamsSendsEmail(t *testing.T) {
 	cmd := &cobra.Command{}
 	cmd.Flags().String("user-email", "", "")

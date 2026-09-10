@@ -21,21 +21,7 @@ var timeEntriesListCmd = &cobra.Command{
 			return err
 		}
 
-		params := paginationParams(cmd)
-		clientID, _ := cmd.Flags().GetString("client")
-		projectID, _ := cmd.Flags().GetString("project")
-		params.Set("client_id", clientID)
-		params.Set("project_id", projectID)
-
-		if startDate, _ := cmd.Flags().GetString("start-date"); startDate != "" {
-			params.Set("start_date", startDate)
-		}
-		if endDate, _ := cmd.Flags().GetString("end-date"); endDate != "" {
-			params.Set("end_date", endDate)
-		}
-		if userEmail, _ := cmd.Flags().GetString("user-email"); userEmail != "" {
-			params.Set("email", userEmail)
-		}
+		params := timeEntriesListParams(cmd)
 
 		data, err := c.Get("/time-entries", params)
 		if err != nil {
@@ -118,6 +104,7 @@ func init() {
 	timeEntriesListCmd.Flags().String("start-date", "", "Filter entries recorded on or after this date (YYYY-MM-DD)")
 	timeEntriesListCmd.Flags().String("end-date", "", "Filter entries recorded on or before this date (YYYY-MM-DD)")
 	timeEntriesListCmd.Flags().String("user-email", "", "Filter to a single user's entries by email")
+	timeEntriesListCmd.Flags().String("task-id", "", "Filter to a single task's entries by task ID")
 	_ = timeEntriesListCmd.MarkFlagRequired("client")
 	_ = timeEntriesListCmd.MarkFlagRequired("project")
 
@@ -179,6 +166,29 @@ func timeEntryCreateBody(cmd *cobra.Command) map[string]interface{} {
 	}
 
 	return body
+}
+
+func timeEntriesListParams(cmd *cobra.Command) url.Values {
+	params := paginationParams(cmd)
+	clientID, _ := cmd.Flags().GetString("client")
+	projectID, _ := cmd.Flags().GetString("project")
+	params.Set("client_id", clientID)
+	params.Set("project_id", projectID)
+
+	if startDate, _ := cmd.Flags().GetString("start-date"); startDate != "" {
+		params.Set("start_date", startDate)
+	}
+	if endDate, _ := cmd.Flags().GetString("end-date"); endDate != "" {
+		params.Set("end_date", endDate)
+	}
+	if userEmail, _ := cmd.Flags().GetString("user-email"); userEmail != "" {
+		params.Set("email", userEmail)
+	}
+	if taskID, _ := cmd.Flags().GetString("task-id"); taskID != "" {
+		params.Set("task_id", taskID)
+	}
+
+	return params
 }
 
 func timeEntryDeleteParams(cmd *cobra.Command) url.Values {
