@@ -35,6 +35,35 @@ func TestTimeEntriesFlags(t *testing.T) {
 	}
 }
 
+func TestTimeEntriesRequireUserEmailForMutations(t *testing.T) {
+	for _, cmd := range []*cobra.Command{timeEntriesUpdateCmd, timeEntriesDeleteCmd} {
+		flag := cmd.Flags().Lookup("user-email")
+		if flag == nil {
+			t.Errorf("user-email flag missing on %s", cmd.Name())
+			continue
+		}
+		if _, ok := flag.Annotations[cobra.BashCompOneRequiredFlag]; !ok {
+			t.Errorf("user-email flag is not required on %s", cmd.Name())
+		}
+	}
+}
+
+func TestTimeEntryDeleteParamsSendsEmail(t *testing.T) {
+	cmd := &cobra.Command{}
+	cmd.Flags().String("user-email", "", "")
+	if err := cmd.ParseFlags([]string{"--user-email", "sam@example.com"}); err != nil {
+		t.Fatalf("ParseFlags() error = %v", err)
+	}
+
+	params := timeEntryDeleteParams(cmd)
+	if got := params.Get("email"); got != "sam@example.com" {
+		t.Errorf("email = %q, want sam@example.com", got)
+	}
+	if got := params.Encode(); got != "email=sam%40example.com" {
+		t.Errorf("query = %q, want email=sam%%40example.com", got)
+	}
+}
+
 func newTestCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{}
 	cmd.Flags().String("client", "", "")

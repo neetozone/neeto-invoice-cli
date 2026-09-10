@@ -69,7 +69,7 @@ var teamMembersCreateCmd = &cobra.Command{
 			return err
 		}
 
-		emails, _ := cmd.Flags().GetStringArray("email")
+		emails, _ := cmd.Flags().GetStringSlice("email")
 		role, _ := cmd.Flags().GetString("role")
 		sendInvite, _ := cmd.Flags().GetBool("send-invitation-email")
 		invitedBy, _ := cmd.Flags().GetString("invited-by")
@@ -157,7 +157,7 @@ func init() {
 	addPaginationFlags(teamMembersListCmd)
 	teamMembersListCmd.Flags().String("email", "", "Filter by email address")
 
-	teamMembersCreateCmd.Flags().StringArray("email", nil, "Email address to invite (repeatable)")
+	teamMembersCreateCmd.Flags().StringSlice("email", nil, "Email address to invite (repeatable)")
 	teamMembersCreateCmd.Flags().String("role", "", "Organization role")
 	teamMembersCreateCmd.Flags().Bool("send-invitation-email", true, "Send invitation email")
 	teamMembersCreateCmd.Flags().String("invited-by", "", "Inviter name or email")
