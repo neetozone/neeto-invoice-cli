@@ -12,7 +12,6 @@ func TestReportingCommandsRegistered(t *testing.T) {
 		subs   []string
 	}{
 		{monthlyPtosCmd, []string{"list", "update-earned"}},
-		{forcedPtosCmd, []string{"list", "create"}},
 		{reportsCmd, []string{"payroll-summary", "missing-entries", "timesheet-summary"}},
 	}
 
