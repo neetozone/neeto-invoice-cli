@@ -124,6 +124,7 @@ func init() {
 
 	timeEntriesUpdateCmd.Flags().String("notes", "", "New notes")
 	timeEntriesUpdateCmd.Flags().Float64("hours", 0, "New hours")
+	timeEntriesUpdateCmd.Flags().String("task-id", "", "Move the entry to another task on the same project")
 	timeEntriesUpdateCmd.Flags().String("recorded-on", "", "New date (YYYY-MM-DD)")
 	timeEntriesUpdateCmd.Flags().Bool("is-override", false, "Override autolock for a locked date")
 	timeEntriesUpdateCmd.Flags().String("user-email", "", "Email of the user the time entry belongs to")
@@ -213,6 +214,9 @@ func timeEntryUpdateBody(cmd *cobra.Command) map[string]interface{} {
 	}
 	if recordedOn, _ := cmd.Flags().GetString("recorded-on"); recordedOn != "" {
 		body["recorded_on"] = recordedOn
+	}
+	if taskID, _ := cmd.Flags().GetString("task-id"); taskID != "" {
+		body["task_id"] = taskID
 	}
 	if cmd.Flags().Changed("is-override") {
 		body["is_override"] = true

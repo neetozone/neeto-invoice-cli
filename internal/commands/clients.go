@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"net/url"
 
 	"github.com/neetozone/neeto-cli-commons/output"
 	"github.com/spf13/cobra"
@@ -22,7 +21,7 @@ var clientsListCmd = &cobra.Command{
 			return err
 		}
 
-		params := url.Values{}
+		params := paginationParams(cmd)
 		if status, _ := cmd.Flags().GetString("status"); status != "" {
 			params.Set("status", status)
 		}
@@ -149,6 +148,7 @@ func init() {
 
 	addClientFlags(clientsUpdateCmd)
 
+	addPaginationFlags(clientsListCmd)
 	clientsListCmd.Flags().String("status", "", "Filter by status: active or archived")
 	clientsListCmd.Flags().String("name", "", "Filter by name (substring match)")
 
