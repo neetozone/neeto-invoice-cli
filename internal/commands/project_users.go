@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/neetozone/neeto-cli-commons/output"
 	"github.com/spf13/cobra"
@@ -23,7 +24,7 @@ var projectUsersListCmd = &cobra.Command{
 
 		projectID, _ := cmd.Flags().GetString("project")
 
-		data, err := c.Get(fmt.Sprintf("/projects/%s/project-users", projectID), paginationParams(cmd))
+		data, err := c.Get(fmt.Sprintf("/projects/%s/project-users", url.PathEscape(projectID)), paginationParams(cmd))
 		if err != nil {
 			return err
 		}
@@ -52,7 +53,7 @@ var projectUsersCreateCmd = &cobra.Command{
 		projectID, _ := cmd.Flags().GetString("project")
 
 		data, err := c.Post(
-			fmt.Sprintf("/projects/%s/project-users", projectID),
+			fmt.Sprintf("/projects/%s/project-users", url.PathEscape(projectID)),
 			map[string]interface{}{"project_user": projectUserBody(cmd)},
 		)
 		if err != nil {
@@ -79,7 +80,7 @@ var projectUsersUpdateCmd = &cobra.Command{
 		projectID, _ := cmd.Flags().GetString("project")
 
 		data, err := c.Patch(
-			fmt.Sprintf("/projects/%s/project-users/%s", projectID, args[0]),
+			fmt.Sprintf("/projects/%s/project-users/%s", url.PathEscape(projectID), url.PathEscape(args[0])),
 			map[string]interface{}{"project_user": projectUserBody(cmd)},
 		)
 		if err != nil {
@@ -105,7 +106,7 @@ var projectUsersDeleteCmd = &cobra.Command{
 
 		projectID, _ := cmd.Flags().GetString("project")
 
-		if err := c.Delete(fmt.Sprintf("/projects/%s/project-users/%s", projectID, args[0])); err != nil {
+		if err := c.Delete(fmt.Sprintf("/projects/%s/project-users/%s", url.PathEscape(projectID), url.PathEscape(args[0]))); err != nil {
 			return err
 		}
 

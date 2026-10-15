@@ -67,7 +67,7 @@ of the client.`,
 			body["send_email"], _ = cmd.Flags().GetBool("send-email")
 		}
 
-		data, err := c.Post(fmt.Sprintf("/clients/%s/invoices", clientID), body)
+		data, err := c.Post(fmt.Sprintf("/clients/%s/invoices", url.PathEscape(clientID)), body)
 		if err != nil {
 			return err
 		}
