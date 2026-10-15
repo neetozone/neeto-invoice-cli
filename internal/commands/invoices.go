@@ -41,8 +41,9 @@ of the client.`,
 			}
 		}
 
-		userEmail, _ := cmd.Flags().GetString("user-email")
-		body["email"] = userEmail
+		if userEmail, _ := cmd.Flags().GetString("user-email"); userEmail != "" {
+			body["email"] = userEmail
+		}
 
 		if cmd.Flags().Changed("issue-date") {
 			body["issue_date"], _ = cmd.Flags().GetString("issue-date")
@@ -149,7 +150,7 @@ func init() {
 	_ = invoicesSendCmd.MarkFlagRequired("client")
 
 	invoicesCreateCmd.Flags().String("client", "", "Client identifier")
-	invoicesCreateCmd.Flags().String("user-email", "", "Email of the acting organization user")
+	invoicesCreateCmd.Flags().String("user-email", "", "Email of the acting organization user (needed only with an API key)")
 	invoicesCreateCmd.Flags().String("issue-date", "", "Issue date (YYYY-MM-DD)")
 	invoicesCreateCmd.Flags().String("due-date", "", "Due date (YYYY-MM-DD)")
 	invoicesCreateCmd.Flags().String("number", "", "Invoice number")
@@ -161,7 +162,6 @@ func init() {
 	invoicesCreateCmd.Flags().String("data", "", "Path to a JSON file with the full invoice payload (line items, taxes, email details)")
 	_ = invoicesCreateCmd.Flags().MarkDeprecated("data", "use --json-file instead")
 	_ = invoicesCreateCmd.MarkFlagRequired("client")
-	_ = invoicesCreateCmd.MarkFlagRequired("user-email")
 	_ = invoicesCreateCmd.MarkFlagRequired("number")
 	invoicesCreateCmd.PreRunE = func(cmd *cobra.Command, args []string) error {
 		payloadFile := invoicePayloadFile(cmd)

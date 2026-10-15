@@ -211,6 +211,18 @@ func TestInvoicesCreateSendsTimeEntryIDs(t *testing.T) {
 	}
 }
 
+func TestInvoicesCreateWithoutUserEmailSendsNoEmail(t *testing.T) {
+	req, _, err := runAgainstServer(t, `{"notice_code":"thumbs_up","invoice":{}}`,
+		"invoices", "create", "--client", "abc123", "--number", "INV-9", "--time-entry-id", "t1")
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	if _, ok := req.Body["email"]; ok {
+		t.Errorf("email = %v, want it left out", req.Body["email"])
+	}
+}
+
 func TestInvoicesCreateDateHelpUsesISO(t *testing.T) {
 	for _, name := range []string{"issue-date", "due-date"} {
 		if usage := invoicesCreateCmd.Flags().Lookup(name).Usage; !strings.Contains(usage, "YYYY-MM-DD") {
