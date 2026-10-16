@@ -27,10 +27,11 @@ func TestMain(m *testing.M) {
 }
 
 type recordedRequest struct {
-	Method string
-	Path   string
-	Query  url.Values
-	Body   map[string]any
+	Method      string
+	Path        string
+	EscapedPath string
+	Query       url.Values
+	Body        map[string]any
 }
 
 func runAgainstServer(t *testing.T, response string, args ...string) (recordedRequest, string, error) {
@@ -38,7 +39,7 @@ func runAgainstServer(t *testing.T, response string, args ...string) (recordedRe
 
 	var recorded recordedRequest
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		recorded = recordedRequest{Method: r.Method, Path: r.URL.Path, Query: r.URL.Query()}
+		recorded = recordedRequest{Method: r.Method, Path: r.URL.Path, EscapedPath: r.URL.EscapedPath(), Query: r.URL.Query()}
 		_ = json.NewDecoder(r.Body).Decode(&recorded.Body)
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(response))

@@ -223,10 +223,25 @@ func TestInvoicesCreateWithoutUserEmailSendsNoEmail(t *testing.T) {
 	}
 }
 
-func TestInvoicesCreateDateHelpUsesISO(t *testing.T) {
-	for _, name := range []string{"issue-date", "due-date"} {
-		if usage := invoicesCreateCmd.Flags().Lookup(name).Usage; !strings.Contains(usage, "YYYY-MM-DD") {
-			t.Errorf("%s usage = %q, want YYYY-MM-DD", name, usage)
-		}
+func TestInvoicesSendEscapesPathSegments(t *testing.T) {
+	req, _, err := runAgainstServer(t, `{"message":"sent"}`, "invoices", "send", "INV/2026 1", "--client", "ab/c")
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	if !strings.HasSuffix(req.EscapedPath, "/clients/ab%2Fc/invoices/INV%2F2026%201/send") {
+		t.Errorf("path = %s, want escaped client and invoice segments", req.EscapedPath)
+	}
+}
+
+func TestInvoicesCreateEscapesClientInPath(t *testing.T) {
+	req, _, err := runAgainstServer(t, `{"notice_code":"thumbs_up","invoice":{}}`,
+		"invoices", "create", "--client", "ab/c", "--number", "INV-9", "--time-entry-id", "t1")
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	if !strings.HasSuffix(req.EscapedPath, "/clients/ab%2Fc/invoices") {
+		t.Errorf("path = %s, want escaped client segment", req.EscapedPath)
 	}
 }

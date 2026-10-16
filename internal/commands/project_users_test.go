@@ -47,3 +47,14 @@ func TestProjectUsersCreateNeedsExactlyOneUser(t *testing.T) {
 		})
 	}
 }
+
+func TestProjectUsersDeleteEscapesPathSegments(t *testing.T) {
+	req, _, err := runAgainstServer(t, `{}`, "project-users", "delete", "u/1", "--project", "p/1")
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	if req.Method != "DELETE" || !strings.HasSuffix(req.EscapedPath, "/projects/p%2F1/project-users/u%2F1") {
+		t.Errorf("request = %s %s, want DELETE with escaped project and user segments", req.Method, req.EscapedPath)
+	}
+}

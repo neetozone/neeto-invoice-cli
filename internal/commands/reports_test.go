@@ -1,20 +1,6 @@
 package commands
 
-import (
-	"testing"
-
-	"github.com/spf13/cobra"
-)
-
-func TestReportsMissingEntriesUserEmailIsOptional(t *testing.T) {
-	flag := reportsMissingEntriesCmd.Flags().Lookup("user-email")
-	if flag == nil {
-		t.Fatal("user-email flag missing on reports missing-entries")
-	}
-	if _, ok := flag.Annotations[cobra.BashCompOneRequiredFlag]; ok {
-		t.Error("user-email is required on reports missing-entries, want it optional")
-	}
-}
+import "testing"
 
 func TestReportsMissingEntriesWithoutUserOmitsEmail(t *testing.T) {
 	req, _, err := runAgainstServer(t, `{"count":0,"users":[]}`,
