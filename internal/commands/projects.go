@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"net/url"
 
 	"github.com/neetozone/neeto-cli-commons/output"
 	"github.com/spf13/cobra"
@@ -22,7 +21,10 @@ var projectsListCmd = &cobra.Command{
 			return err
 		}
 
-		params := url.Values{}
+		params := paginationParams(cmd)
+		if name, _ := cmd.Flags().GetString("name"); name != "" {
+			params.Set("name", name)
+		}
 		if clientID, _ := cmd.Flags().GetString("client-id"); clientID != "" {
 			params.Set("client_id", clientID)
 		}
@@ -181,6 +183,8 @@ func init() {
 
 	addProjectFlags(projectsUpdateCmd)
 
+	addPaginationFlags(projectsListCmd)
+	projectsListCmd.Flags().String("name", "", "Filter by name (substring match)")
 	projectsListCmd.Flags().String("client-id", "", "Filter to one client (identifier or ID)")
 	projectsListCmd.Flags().String("user-email", "", "Filter to a user's projects")
 	projectsListCmd.Flags().String("status", "", "Filter by status: active or archived")

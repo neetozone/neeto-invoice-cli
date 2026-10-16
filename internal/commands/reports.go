@@ -39,7 +39,7 @@ var reportsPayrollSummaryCmd = &cobra.Command{
 
 var reportsMissingEntriesCmd = &cobra.Command{
 	Use:   "missing-entries",
-	Short: "Working days with no timesheet entry for a user",
+	Short: "Working days with no timesheet entry, for a user or the whole team",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		c, err := getClient(cmd)
 		if err != nil {
@@ -47,10 +47,11 @@ var reportsMissingEntriesCmd = &cobra.Command{
 		}
 
 		params := url.Values{}
-		email, _ := cmd.Flags().GetString("user-email")
 		startDate, _ := cmd.Flags().GetString("start-date")
 		endDate, _ := cmd.Flags().GetString("end-date")
-		params.Set("email", email)
+		if email, _ := cmd.Flags().GetString("user-email"); email != "" {
+			params.Set("email", email)
+		}
 		params.Set("start_date", startDate)
 		params.Set("end_date", endDate)
 
@@ -98,10 +99,9 @@ func init() {
 	_ = reportsPayrollSummaryCmd.MarkFlagRequired("month")
 	_ = reportsPayrollSummaryCmd.MarkFlagRequired("year")
 
-	reportsMissingEntriesCmd.Flags().String("user-email", "", "User email")
+	reportsMissingEntriesCmd.Flags().String("user-email", "", "Only this user's missing days (default: every active team member with a missing day)")
 	reportsMissingEntriesCmd.Flags().String("start-date", "", "Range start (YYYY-MM-DD)")
 	reportsMissingEntriesCmd.Flags().String("end-date", "", "Range end (YYYY-MM-DD)")
-	_ = reportsMissingEntriesCmd.MarkFlagRequired("user-email")
 	_ = reportsMissingEntriesCmd.MarkFlagRequired("start-date")
 	_ = reportsMissingEntriesCmd.MarkFlagRequired("end-date")
 

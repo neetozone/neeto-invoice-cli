@@ -167,3 +167,15 @@ func TestTimeEntryUpdateBodyOnlyIncludesChangedFields(t *testing.T) {
 		t.Error("hours should be omitted when not changed")
 	}
 }
+
+func TestTimeEntriesUpdateSendsTaskID(t *testing.T) {
+	req, _, err := runAgainstServer(t, `{"time_entry":{"id":"te1"}}`,
+		"time-entries", "update", "te1", "--task-id", "task2", "--user-email", "sam@example.com")
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	if req.Method != "PUT" || req.Body["task_id"] != "task2" || req.Body["email"] != "sam@example.com" {
+		t.Errorf("request = %s %v, want PUT with task_id task2 and email", req.Method, req.Body)
+	}
+}

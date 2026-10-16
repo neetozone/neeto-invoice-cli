@@ -113,3 +113,135 @@ func TestInvoicesCreateAcceptsNumberFromJSONFile(t *testing.T) {
 		t.Error("number should no longer be required once the JSON file supplies it")
 	}
 }
+
+func TestInvoicesListSendsFilters(t *testing.T) {
+	req, _, err := runAgainstServer(t, `{"invoices":[],"total_count":0,"page":1,"page_size":30,"total_pages":1}`,
+		"invoices", "list", "--client", "abc123", "--status", "generated", "--overdue",
+		"--start-date", "2026-08-01", "--end-date", "2026-08-31", "--page", "2", "--page-size", "50")
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	if req.Method != "GET" || !strings.HasSuffix(req.Path, "/invoices") {
+		t.Errorf("request = %s %s, want GET .../invoices", req.Method, req.Path)
+	}
+	want := map[string]string{
+		"client_id": "abc123", "status": "generated", "overdue": "true",
+		"start_date": "2026-08-01", "end_date": "2026-08-31",
+	}
+	for key, value := range want {
+		if got := req.Query.Get(key); got != value {
+			t.Errorf("query %s = %q, want %q", key, got, value)
+		}
+	}
+	if req.Query.Get("page") != "2" || req.Query.Get("page_size") != "50" {
+		t.Errorf("pagination query = %v, want page=2 page_size=50", req.Query)
+	}
+}
+
+func TestInvoicesListOmitsUnsetFilters(t *testing.T) {
+	req, _, err := runAgainstServer(t, `{"invoices":[]}`, "invoices", "list")
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	for _, key := range []string{"client_id", "status", "overdue", "start_date", "end_date"} {
+		if req.Query.Has(key) {
+			t.Errorf("query has %s = %q, want it omitted", key, req.Query.Get(key))
+		}
+	}
+}
+
+func TestInvoicesSendPostsBody(t *testing.T) {
+	req, _, err := runAgainstServer(t, `{"message":"sent","id":"i1","number":"INV-1","sent_date":"2026-10-15","recipient_emails":["a@example.com"]}`,
+		"invoices", "send", "INV-2026-042", "--client", "abc123",
+		"--recipient-id", "r1", "--recipient-id", "r2", "--subject", "Hello", "--message", "Please pay",
+		"--attach-pdf", "--send-me-a-copy", "--user-email", "sam@example.com")
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	if req.Method != "POST" || !strings.HasSuffix(req.Path, "/clients/abc123/invoices/INV-2026-042/send") {
+		t.Errorf("request = %s %s, want POST .../clients/abc123/invoices/INV-2026-042/send", req.Method, req.Path)
+	}
+	if got, _ := req.Body["recipient_ids"].([]any); len(got) != 2 || got[0] != "r1" || got[1] != "r2" {
+		t.Errorf("recipient_ids = %v, want [r1 r2]", req.Body["recipient_ids"])
+	}
+	for key, value := range map[string]any{
+		"subject": "Hello", "message": "Please pay", "attach_pdf_invoice": true,
+		"send_me_a_copy": true, "email": "sam@example.com",
+	} {
+		if req.Body[key] != value {
+			t.Errorf("body %s = %v, want %v", key, req.Body[key], value)
+		}
+	}
+}
+
+func TestInvoicesSendOmitsUnsetOptions(t *testing.T) {
+	req, _, err := runAgainstServer(t, `{"message":"sent"}`, "invoices", "send", "INV-1", "--client", "abc123")
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	if len(req.Body) != 0 {
+		t.Errorf("body = %v, want it empty", req.Body)
+	}
+}
+
+func TestInvoicesSendRequiresClient(t *testing.T) {
+	_, _, err := runAgainstServer(t, `{}`, "invoices", "send", "INV-1")
+	if err == nil || !strings.Contains(err.Error(), "client") {
+		t.Errorf("Execute() error = %v, want an error naming client", err)
+	}
+}
+
+func TestInvoicesCreateSendsTimeEntryIDs(t *testing.T) {
+	req, _, err := runAgainstServer(t, `{"notice_code":"thumbs_up","invoice":{}}`,
+		"invoices", "create", "--client", "abc123", "--user-email", "sam@example.com", "--number", "INV-9",
+		"--time-entry-id", "t1", "--time-entry-id", "t2", "--issue-date", "2026-10-15")
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	if got, _ := req.Body["time_entry_ids"].([]any); len(got) != 2 || got[0] != "t1" || got[1] != "t2" {
+		t.Errorf("time_entry_ids = %v, want [t1 t2]", req.Body["time_entry_ids"])
+	}
+	if req.Body["issue_date"] != "2026-10-15" {
+		t.Errorf("issue_date = %v, want 2026-10-15", req.Body["issue_date"])
+	}
+}
+
+func TestInvoicesCreateWithoutUserEmailSendsNoEmail(t *testing.T) {
+	req, _, err := runAgainstServer(t, `{"notice_code":"thumbs_up","invoice":{}}`,
+		"invoices", "create", "--client", "abc123", "--number", "INV-9", "--time-entry-id", "t1")
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	if _, ok := req.Body["email"]; ok {
+		t.Errorf("email = %v, want it left out", req.Body["email"])
+	}
+}
+
+func TestInvoicesSendEscapesPathSegments(t *testing.T) {
+	req, _, err := runAgainstServer(t, `{"message":"sent"}`, "invoices", "send", "INV/2026 1", "--client", "ab/c")
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	if !strings.HasSuffix(req.EscapedPath, "/clients/ab%2Fc/invoices/INV%2F2026%201/send") {
+		t.Errorf("path = %s, want escaped client and invoice segments", req.EscapedPath)
+	}
+}
+
+func TestInvoicesCreateEscapesClientInPath(t *testing.T) {
+	req, _, err := runAgainstServer(t, `{"notice_code":"thumbs_up","invoice":{}}`,
+		"invoices", "create", "--client", "ab/c", "--number", "INV-9", "--time-entry-id", "t1")
+	if err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	if !strings.HasSuffix(req.EscapedPath, "/clients/ab%2Fc/invoices") {
+		t.Errorf("path = %s, want escaped client segment", req.EscapedPath)
+	}
+}

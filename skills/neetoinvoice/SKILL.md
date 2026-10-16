@@ -135,19 +135,22 @@ flag. The resource commands are:
 | --- | --- |
 | `clients list/create/show/update` | Manage clients. `list` finds an identifier by `--name` or `--status`; `show`/`update` take the client identifier; `create` requires `--name`. |
 | `recipients create/update/delete` | Manage a client's invoice recipients. All take `--client <client-identifier>`; `create` also needs `--name`, `--email`, and `--user-email` (the acting organization user). |
-| `invoices create` | Generate an invoice for a client. Requires `--client`, `--user-email` and `--number`; line items (`invoice_time_entries`/`invoice_services`) are passed via `--json-file <file.json>`, which can also supply `--number`. Dates are MM/DD/YYYY. |
-| `projects list/create/show/update` | Manage projects. `list` filters by `--client-id`, `--user-email` or `--status`; `create` requires `--name`, `--client-id` (the client record ID), at least one `--task`, and `--user-email`. Billing methods: `hourly_project_rate`, `hourly_person_rate`, `hourly_task_rate`, `fixed_price_project`. |
-| `project-users list/create/update/delete` | Manage users on a project. All take `--project <project-identifier>`; roles are `regular_user`/`project_manager`. |
-| `time-entries list/create/update/delete` | List unbilled time entries for a project, or log, edit and remove time. `list`/`create` take `--client` and `--project`; `list` can additionally filter to a single task with `--task-id`; `create` also needs `--task-id`, `--user-email`, `--recorded-on` (YYYY-MM-DD), and `--hours`. `update`/`delete` take the time-entry ID and require `--user-email`, the user the entry belongs to. Billed entries cannot be changed or deleted. Pass `--is-override` to write to a date autolock has closed. |
+| `invoices list` | List invoices, newest first; filter by `--client`, `--status`, `--start-date`/`--end-date` (issue dates, YYYY-MM-DD) or `--overdue`; rows include grand_total, amount_paid, amount_due and days_overdue. |
+| `invoices send <invoice>` | Email an invoice to the client's recipients; all current recipients unless repeatable `--recipient-id` narrows it. Requires `--client`; optional `--subject`, `--message`, `--attach-pdf`, `--send-me-a-copy`, and `--user-email` (only with an API key). `<invoice>` is the number, identifier or ID. |
+| `invoices create` | Generate an invoice for a client. Requires `--client` and `--number` (`--user-email` only with an API key); line items (`invoice_time_entries`/`invoice_services`) are passed via `--json-file <file.json>`, which can also supply `--number`. Dates are YYYY-MM-DD. Taxes (`tax_details`) and expenses (`invoice_expenses` with a `category` name) go in --json-file; --time-entry-id bills unbilled entries. With `--send-email` and no `invoice_details.recipient_ids`, every current recipient is emailed. |
+| `projects list/create/show/update` | Manage projects. `list` filters by `--client-id`, `--user-email`, `--status` or `--name`; `create` requires `--name`, `--client-id` (the client record ID), at least one `--task`, and `--user-email`. Billing methods: `hourly_project_rate`, `hourly_person_rate`, `hourly_task_rate`, `fixed_price_project`. |
+| `project-users list/create/update/delete` | Manage users on a project. All take `--project <project-identifier>`; roles are `regular_user`/`project_manager`. `create` takes exactly one of `--user-id` or `--user-email`. |
+| `time-entries list/create/update/delete` | List unbilled time entries for a project, or log, edit and remove time. `list`/`create` take `--client` and `--project`; `list` can additionally filter to a single task with `--task-id`; `create` also needs `--task-id`, `--user-email`, `--recorded-on` (YYYY-MM-DD), and `--hours`. `update`/`delete` take the time-entry ID and require `--user-email`, the user the entry belongs to. Billed entries cannot be changed or deleted. `update` also takes `--task-id` to move the entry to another task on the same project. Pass `--is-override` to write to a date autolock has closed. |
 | `team-members list/show/create/update/delete` | Manage organization members. `create` takes repeatable `--email` plus `--role`; `show`/`update`/`delete` take the team-member ID. |
 | `monthly-ptos list/update-earned` | Read the monthly PTO report, or set PTO earned. Both need `--month` and `--year`; `update-earned` takes repeatable `--email` and reports `updated`/`skipped` per address. |
-| `reports payroll-summary/timesheet-summary/missing-entries` | Read-only reports over logged time. `payroll-summary` needs `--month`/`--year`; the other two need `--start-date`/`--end-date`, and `missing-entries` also needs `--user-email`. |
+| `reports payroll-summary/timesheet-summary/missing-entries` | Read-only reports over logged time. `payroll-summary` needs `--month`/`--year`; the other two need `--start-date`/`--end-date`, and `missing-entries` takes an optional `--user-email`; omit it for the whole team. |
 
-`time-entries list` and `team-members list` paginate (`--page`, `--page-size`)
-and carry a `pagination` block in the envelope; the other list commands return
-the full set.
+`clients list`, `projects list`, `project-users list`, `invoices list`,
+`team-members list` and `time-entries list` are paginated (`--page`,
+`--page-size`, max 100) and carry a `pagination` block in the envelope.
+`monthly-ptos list` and the reports return the full set. PTO figures are hours.
 
-ID conventions: `clients`/`projects` are addressed by their `identifier`
-(short hex string returned in `show` responses); `clients create` and
+ID conventions: clients and projects accept the identifier or the ID
+everywhere; invoices accept the number, identifier or ID. `clients create` and
 project `--client-id` use the record `id` (UUID). Recipient, project-user,
 task, team-member, and time-entry IDs are UUIDs.
