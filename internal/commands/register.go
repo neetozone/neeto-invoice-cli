@@ -1,12 +1,13 @@
 package commands
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	json "encoding/json/v2"
 	"net/url"
 
-	"github.com/neetozone/neeto-cli-commons/cli"
-	"github.com/neetozone/neeto-cli-commons/client"
-	"github.com/neetozone/neeto-cli-commons/output"
+	"github.com/neetozone/neeto-cli-commons/v2/cli"
+	"github.com/neetozone/neeto-cli-commons/v2/client"
+	"github.com/neetozone/neeto-cli-commons/v2/output"
 	"github.com/spf13/cobra"
 )
 
@@ -28,15 +29,15 @@ func Register(a *cli.App) {
 
 func getClient(cmd *cobra.Command) (*client.Client, error) { return app.Client(cmd) }
 
-func printList(data json.RawMessage, resourceKey string, breadcrumbs []output.Breadcrumb) {
+func printList(data jsontext.Value, resourceKey string, breadcrumbs []output.Breadcrumb) {
 	app.PrintList(data, resourceKey, breadcrumbs)
 }
 
-func printResource(data json.RawMessage, breadcrumbs []output.Breadcrumb) {
+func printResource(data jsontext.Value, breadcrumbs []output.Breadcrumb) {
 	app.PrintResource(data, breadcrumbs)
 }
 
-func printActionResult(data json.RawMessage, breadcrumbs []output.Breadcrumb) {
+func printActionResult(data jsontext.Value, breadcrumbs []output.Breadcrumb) {
 	app.PrintActionResult(data, breadcrumbs)
 }
 
@@ -52,7 +53,7 @@ func allowJSONFileToSatisfyRequiredFlags(cmd *cobra.Command) {
 
 func printMessage(msg string) { app.PrintMessage(msg) }
 
-func thumbsUpNotice(data json.RawMessage) (string, bool) {
+func thumbsUpNotice(data jsontext.Value) (string, bool) {
 	var obj struct {
 		Notice     string `json:"notice"`
 		NoticeCode string `json:"notice_code"`
@@ -69,7 +70,7 @@ func thumbsUpNotice(data json.RawMessage) (string, bool) {
 	return "success", true
 }
 
-func printCreateResult(data json.RawMessage, breadcrumbs []output.Breadcrumb) {
+func printCreateResult(data jsontext.Value, breadcrumbs []output.Breadcrumb) {
 	if msg, ok := thumbsUpNotice(data); ok && !app.Printer.Toon && !app.Printer.UseJSON() {
 		printMessage(msg)
 		return
