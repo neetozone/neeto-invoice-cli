@@ -2,16 +2,16 @@ package commands
 
 import (
 	"bytes"
-	"encoding/json"
+	json "encoding/json/v2"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
 	"testing"
 
-	"github.com/neetozone/neeto-cli-commons/auth"
-	"github.com/neetozone/neeto-cli-commons/cli"
-	"github.com/neetozone/neeto-cli-commons/config"
+	"github.com/neetozone/neeto-cli-commons/v2/auth"
+	"github.com/neetozone/neeto-cli-commons/v2/cli"
+	"github.com/neetozone/neeto-cli-commons/v2/config"
 	product "github.com/neetozone/neeto-invoice-cli"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -40,7 +40,7 @@ func runAgainstServer(t *testing.T, response string, args ...string) (recordedRe
 	var recorded recordedRequest
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		recorded = recordedRequest{Method: r.Method, Path: r.URL.Path, EscapedPath: r.URL.EscapedPath(), Query: r.URL.Query()}
-		_ = json.NewDecoder(r.Body).Decode(&recorded.Body)
+		_ = json.UnmarshalRead(r.Body, &recorded.Body)
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(response))
 	}))
